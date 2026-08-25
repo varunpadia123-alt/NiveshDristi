@@ -1,0 +1,19 @@
+import os
+from pydantic_settings import BaseSettings
+
+class Settings:
+    PROJECT_NAME: str = "NiveshDristi API"
+    VERSION: str = "1.0.0"
+    API_V1_STR: str = "/api"
+    DATABASE_URL: str = "sqlite:///./niveshdristi.db"
+    
+    # Financial Engine Defaults
+    STCG_TAX_RATE: float = 0.20  # 20% Short Term Capital Gains Tax (India equity standard)
+    LTCG_TAX_RATE: float = 0.125 # 12.5% Long Term Capital Gains Tax
+    LTCG_THRESHOLD_DAYS: int = 365
+    CONCENTRATION_ALERT_THRESHOLD_PCT: float = 30.0 # Alert if 1 sector > 30%
+    
+    # LLM Settings (Optional API Key - gracefully falls back to deterministic RAG template engine)
+    OPENAI_API_KEY: str = os.getenv("OPENAI_API_KEY", "")
+
+settings = Settings()

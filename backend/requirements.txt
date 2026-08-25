@@ -1,0 +1,10 @@
+fastapi>=0.104.0
+uvicorn>=0.24.0
+pydantic>=2.5.0
+pandas>=2.1.0
+numpy>=1.26.0
+pandas-ta>=0.3.14b0
+sqlalchemy>=2.0.23
+yfinance>=0.2.33
+python-dotenv>=1.0.0
+httpx>=0.25.1
