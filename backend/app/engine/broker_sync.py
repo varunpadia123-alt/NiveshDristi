@@ -9,7 +9,7 @@ MOCK_BROKER_HOLDINGS = {
         {"ticker": "RELIANCE.NS", "symbol_name": "Reliance Industries Ltd", "sector": "Energy", "quantity": 25.0, "average_buy_price": 2850.0, "purchase_date": "2023-11-15"},
         {"ticker": "TCS.NS", "symbol_name": "Tata Consultancy Services", "sector": "IT Services", "quantity": 15.0, "average_buy_price": 3950.0, "purchase_date": "2024-03-10"},
         {"ticker": "INFY.NS", "symbol_name": "Infosys Ltd", "sector": "IT Services", "quantity": 40.0, "average_buy_price": 1720.0, "purchase_date": "2024-01-20"},
-        {"ticker": "TATAMOTORS.NS", "symbol_name": "Tata Motors Ltd", "sector": "Automobile", "quantity": 50.0, "average_buy_price": 980.0, "purchase_date": "2023-08-05"},
+        {"ticker": "M&M.NS", "symbol_name": "Mahindra & Mahindra Ltd", "sector": "Automobile", "quantity": 30.0, "average_buy_price": 2750.0, "purchase_date": "2023-08-05"},
         {"ticker": "HDFCBANK.NS", "symbol_name": "HDFC Bank Ltd", "sector": "Banking", "quantity": 30.0, "average_buy_price": 1420.0, "purchase_date": "2024-05-12"}
     ],
     "Upstox": [

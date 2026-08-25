@@ -29,10 +29,10 @@ SECTOR_UNIVERSE = {
         {"ticker": "AXISBANK.NS", "name": "Axis Bank Ltd", "beta": 1.20, "volatility": 5.1}
     ],
     "Automobile": [
-        {"ticker": "TATAMOTORS.NS", "name": "Tata Motors Ltd", "beta": 1.40, "volatility": 6.8},
-        {"ticker": "M&M.NS", "name": "Mahindra & Mahindra", "beta": 1.10, "volatility": 4.9},
+        {"ticker": "M&M.NS", "name": "Mahindra & Mahindra Ltd", "beta": 1.10, "volatility": 4.9},
         {"ticker": "MARUTI.NS", "name": "Maruti Suzuki India", "beta": 0.90, "volatility": 3.8},
-        {"ticker": "HEROMOTOCO.NS", "name": "Hero MotoCorp", "beta": 0.95, "volatility": 4.1}
+        {"ticker": "HEROMOTOCO.NS", "name": "Hero MotoCorp", "beta": 0.95, "volatility": 4.1},
+        {"ticker": "BAJAJ-AUTO.NS", "name": "Bajaj Auto Ltd", "beta": 0.85, "volatility": 3.6}
     ],
     "Consumer Goods": [
         {"ticker": "HINDUNILVR.NS", "name": "Hindustan Unilever", "beta": 0.65, "volatility": 2.8},
@@ -45,6 +45,7 @@ SECTOR_UNIVERSE = {
 def discover_sector_alternative(
     holding_id: int,
     original_ticker: str,
+    original_name: str,
     sector: str,
     buy_price: float,
     current_price: float,
@@ -53,7 +54,8 @@ def discover_sector_alternative(
     user_risk_score: int
 ) -> Optional[AlternativeDiscovery]:
     """
-    Finds intra-sector alternative asset showing stronger technical score, tax drag estimation, and risk guardrail compliance.
+    Finds high-potential intra-sector alternative asset boasting higher composite technical score,
+    positive FinBERT sentiment overlay (avoiding value traps), tax drag modeling, and risk guardrails.
     """
     orig_metrics = compute_technical_metrics(original_ticker)
 
@@ -65,14 +67,18 @@ def discover_sector_alternative(
         if cand["ticker"] == original_ticker:
             continue
 
-        # Check risk guardrail
+        # Risk guardrail filter
         if not is_stock_risk_aligned(cand["beta"], cand["volatility"], user_risk_score):
             continue
 
         cand_metrics = compute_technical_metrics(cand["ticker"])
         
-        # Calculate compound technical score (RSI + MACD bonus + Trend bonus)
-        score = cand_metrics.rsi_14 + (20.0 if cand_metrics.badge == "BULLISH TREND" else 0.0) + (10.0 if cand_metrics.macd_hist > 0 else -10.0)
+        # Avoid Value Traps (negative sentiment + oversold traps)
+        if cand_metrics.value_trap_risk or cand_metrics.sentiment_score < -0.2:
+            continue
+
+        # Score formula: Composite Score + Sentiment boost + Bullish badge bonus
+        score = cand_metrics.composite_score + (cand_metrics.sentiment_score * 1.5) + (2.0 if cand_metrics.badge == "HOLD" else 0.0)
         
         if score > best_score:
             best_score = score
@@ -86,29 +92,40 @@ def discover_sector_alternative(
 
     alt_info, alt_metrics = best_candidate
 
-    tax_info = calculate_tax_impact(purchase_date, current_price, buy_price, quantity)
+    tax_info = calculate_tax_impact(purchase_date, current_price, buy_price, quantity, alt_metrics.current_price)
     
     rag_explanation = generate_rag_rationale(
         original_ticker, orig_metrics, alt_info["ticker"], alt_metrics, tax_info
     )
 
+    delta_comp = round(float(alt_metrics.composite_score - orig_metrics.composite_score), 2)
+
     return AlternativeDiscovery(
         original_holding_id=holding_id,
         original_ticker=original_ticker,
+        original_name=original_name or original_ticker,
         original_badge=orig_metrics.badge,
+        original_composite_score=orig_metrics.composite_score,
         alternative_ticker=alt_info["ticker"],
         alternative_name=alt_info["name"],
         sector=sector,
         alternative_price=alt_metrics.current_price,
         alternative_badge=alt_metrics.badge,
-        technical_score_improvement=round(float(alt_metrics.rsi_14 - orig_metrics.rsi_14), 1),
+        alternative_composite_score=alt_metrics.composite_score,
+        technical_score_improvement=delta_comp,
         correlation_with_original=0.86,
+        sentiment_score=alt_metrics.sentiment_score,
+        sentiment_label=alt_metrics.sentiment_label,
+        value_trap_risk=alt_metrics.value_trap_risk,
+        sentiment_headline=alt_metrics.sentiment_headline,
         holding_days=tax_info["holding_days"],
         tax_type=tax_info["tax_type"],
         tax_rate_pct=tax_info["tax_rate_pct"],
         unrealized_gain=tax_info["unrealized_gain"],
         estimated_tax_payable=tax_info["estimated_tax_payable"],
         net_gain_after_tax=tax_info["net_gain_after_tax"],
+        redeployable_capital=tax_info["redeployable_capital"],
+        new_shares_acquired=tax_info["new_shares_acquired"],
         rag_rationale=rag_explanation,
-        disclaimer="NiveshDristi provides algorithmic metric translation and quantitative screening based on technical indicators. This does not constitute personalized financial or fiduciary investment advice."
+        disclaimer="NiveshDristi provides algorithmic metric translation and quantitative screening based on technical indicators and sentiment analysis. This does not constitute personalized financial or fiduciary investment advice."
     )

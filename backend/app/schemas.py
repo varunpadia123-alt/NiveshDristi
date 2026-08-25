@@ -17,6 +17,9 @@ class HoldingResponse(HoldingCreate):
     market_value: float
     pnl: float
     pnl_percentage: float
+    badge: Optional[str] = "HOLD" # 'HOLD', 'SELL', 'SWAP'
+    composite_score: Optional[float] = 0.0 # -5.0 to +5.0
+    sentiment_label: Optional[str] = "NEUTRAL" # 'BULLISH', 'NEUTRAL', 'BEARISH'
 
     class Config:
         from_attributes = True
@@ -33,32 +36,60 @@ class TechnicalMetrics(BaseModel):
     sma_200: float
     ema_9: float
     ema_21: float
-    badge: str # 'BULLISH TREND', 'BEARISH SIGNAL', 'NEUTRAL/STAGNANT'
-    badge_reason: str
+    volume_sma_ratio: float = 1.0
     support_level: float
     resistance_level: float
+    
+    # Algorithmic Weighted Composite Score (-5.0 to +5.0)
+    composite_score: float
+    momentum_score: float
+    trend_score: float
+    volume_score: float
+    
+    # Actionable 3-Tier Badge
+    badge: str # 'HOLD', 'SELL', 'SWAP'
+    badge_reason: str
+    
+    # FinBERT Financial News Sentiment Overlay
+    sentiment_score: float # -1.0 to +1.0
+    sentiment_label: str # 'BULLISH', 'NEUTRAL', 'BEARISH'
+    value_trap_risk: bool # True if oversold technicals but severely negative sentiment
+    sentiment_headline: str
 
 class AlternativeDiscovery(BaseModel):
     original_holding_id: int
     original_ticker: str
+    original_name: str
     original_badge: str
+    original_composite_score: float
+    
     alternative_ticker: str
     alternative_name: str
     sector: str
     alternative_price: float
     alternative_badge: str
-    technical_score_improvement: float # e.g. +24.5%
-    correlation_with_original: float # e.g. 0.82
+    alternative_composite_score: float
     
-    # Tax awareness
+    technical_score_improvement: float # e.g. +3.4 points
+    correlation_with_original: float # e.g. 0.86
+    
+    # FinBERT Sentiment Overlay
+    sentiment_score: float
+    sentiment_label: str
+    value_trap_risk: bool
+    sentiment_headline: str
+    
+    # Capital Gains Tax Drag Modeling
     holding_days: int
-    tax_type: str # 'STCG' (Short Term Capital Gains) or 'LTCG' (Long Term)
+    tax_type: str # 'STCG' (20%) or 'LTCG' (12.5%)
     tax_rate_pct: float
     unrealized_gain: float
     estimated_tax_payable: float
     net_gain_after_tax: float
+    redeployable_capital: float
+    new_shares_acquired: float
     
-    # RAG Rationale
+    # RAG Explanatory Rationale
     rag_rationale: str
     disclaimer: str
 
@@ -78,6 +109,25 @@ class PortfolioSummary(BaseModel):
     broker_connected: str
     concentration_alerts: List[str]
     sector_exposures: List[SectorExposure]
+    portfolio_health_score: float # 0 to 100
+
+class SwapExecutionRequest(BaseModel):
+    holding_id: int
+    alternative_ticker: str
+    alternative_name: str
+    sector: str
+    alternative_price: float
+
+class SwapExecutionResponse(BaseModel):
+    success: bool
+    message: str
+    old_ticker: str
+    new_ticker: str
+    sold_amount: float
+    tax_deducted: float
+    redeployed_amount: float
+    new_quantity: float
+    new_holding_id: int
 
 class BacktestRequest(BaseModel):
     ticker: str
@@ -86,7 +136,7 @@ class BacktestRequest(BaseModel):
 class BacktestDataPoint(BaseModel):
     date: str
     price: float
-    signal: Optional[str] = None # 'BUY', 'SELL', None
+    signal: Optional[str] = None # 'BUY', 'SELL', 'HOLD'
     strategy_equity: float
     buy_hold_equity: float
 
@@ -107,3 +157,4 @@ class BacktestResponse(BaseModel):
 class UserRiskProfileUpdate(BaseModel):
     risk_score: int = Field(..., ge=1, le=10)
     broker_connected: Optional[str] = "Zerodha Kite"
+
