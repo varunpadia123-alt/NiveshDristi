@@ -82,27 +82,27 @@ export const AddHoldingModal: React.FC<AddHoldingModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md overflow-y-auto">
-      <div className="relative w-full max-w-lg glass-card rounded-3xl border border-white/15 shadow-2xl p-6 sm:p-8 bg-slate-900/95 my-8">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-xs overflow-y-auto">
+      <div className="relative w-full max-w-lg light-card rounded-3xl border border-slate-200 shadow-2xl p-6 sm:p-8 bg-white my-8">
         
         {/* Close Button */}
         <button
           onClick={onClose}
-          className="absolute top-5 right-5 p-2 rounded-xl text-slate-400 hover:text-white hover:bg-white/10 transition cursor-pointer"
+          className="absolute top-5 right-5 p-2 rounded-xl text-slate-400 hover:text-slate-900 hover:bg-slate-100 transition cursor-pointer"
         >
           <X className="w-5 h-5" />
         </button>
 
         {/* Modal Header */}
         <div className="flex items-center space-x-3 mb-5">
-          <div className="w-10 h-10 rounded-2xl bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 flex items-center justify-center shadow-lg shadow-emerald-500/10">
+          <div className="w-10 h-10 rounded-2xl bg-emerald-50 text-emerald-600 border border-emerald-100 flex items-center justify-center shadow-xs">
             <Plus className="w-5 h-5 stroke-[2.5]" />
           </div>
           <div>
-            <h2 className="text-lg font-extrabold text-white tracking-tight">
+            <h2 className="text-lg font-black text-slate-900 tracking-tight">
               Add Asset to Portfolio
             </h2>
-            <p className="text-xs text-slate-400">
+            <p className="text-xs text-slate-500 font-medium">
               Input new stock holding to begin automated indicator scoring.
             </p>
           </div>
@@ -110,14 +110,14 @@ export const AddHoldingModal: React.FC<AddHoldingModalProps> = ({
 
         {/* Presets Bar */}
         <div className="mb-5">
-          <div className="text-[11px] font-semibold text-slate-400 mb-2">Quick Presets:</div>
+          <div className="text-[11px] font-bold text-slate-500 mb-2">Quick Presets:</div>
           <div className="flex flex-wrap gap-1.5">
             {presets.map((p) => (
               <button
                 key={p.ticker}
                 type="button"
                 onClick={() => applyPreset(p)}
-                className="px-2.5 py-1 rounded-lg text-xs bg-slate-800 hover:bg-slate-700 text-slate-300 transition cursor-pointer border border-white/5"
+                className="px-2.5 py-1 rounded-xl text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold transition cursor-pointer border border-slate-200"
               >
                 {p.ticker.replace(".NS", "")}
               </button>
@@ -126,7 +126,7 @@ export const AddHoldingModal: React.FC<AddHoldingModalProps> = ({
         </div>
 
         {error && (
-          <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-300 text-xs mb-4">
+          <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-xs mb-4 font-semibold">
             {error}
           </div>
         )}
@@ -136,23 +136,23 @@ export const AddHoldingModal: React.FC<AddHoldingModalProps> = ({
           
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-slate-300 font-semibold mb-1">Ticker Symbol (NSE)</label>
+              <label className="block text-slate-700 font-bold mb-1">Ticker Symbol (NSE)</label>
               <input
                 type="text"
                 placeholder="e.g. TCS.NS"
                 value={ticker}
                 onChange={(e) => setTicker(e.target.value)}
                 required
-                className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-white/10 text-white placeholder:text-slate-500 focus:outline-none focus:border-emerald-500"
+                className="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-slate-900 font-medium placeholder:text-slate-400 focus:outline-none focus:border-emerald-500"
               />
             </div>
 
             <div>
-              <label className="block text-slate-300 font-semibold mb-1">Sector</label>
+              <label className="block text-slate-700 font-bold mb-1">Sector</label>
               <select
                 value={sector}
                 onChange={(e) => setSector(e.target.value)}
-                className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-white/10 text-white focus:outline-none focus:border-emerald-500"
+                className="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-slate-900 font-medium focus:outline-none focus:border-emerald-500"
               >
                 {sectors.map((s) => (
                   <option key={s} value={s}>{s}</option>
@@ -162,20 +162,20 @@ export const AddHoldingModal: React.FC<AddHoldingModalProps> = ({
           </div>
 
           <div>
-            <label className="block text-slate-300 font-semibold mb-1">Company / Symbol Name</label>
+            <label className="block text-slate-700 font-bold mb-1">Company / Symbol Name</label>
             <input
               type="text"
               placeholder="e.g. Tata Consultancy Services"
               value={symbolName}
               onChange={(e) => setSymbolName(e.target.value)}
               required
-              className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-white/10 text-white placeholder:text-slate-500 focus:outline-none focus:border-emerald-500"
+              className="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-slate-900 font-medium placeholder:text-slate-400 focus:outline-none focus:border-emerald-500"
             />
           </div>
 
           <div className="grid grid-cols-3 gap-3">
             <div>
-              <label className="block text-slate-300 font-semibold mb-1">Quantity</label>
+              <label className="block text-slate-700 font-bold mb-1">Quantity</label>
               <input
                 type="number"
                 step="any"
@@ -183,12 +183,12 @@ export const AddHoldingModal: React.FC<AddHoldingModalProps> = ({
                 value={quantity}
                 onChange={(e) => setQuantity(e.target.value)}
                 required
-                className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-white/10 text-white focus:outline-none focus:border-emerald-500"
+                className="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-slate-900 font-medium focus:outline-none focus:border-emerald-500"
               />
             </div>
 
             <div>
-              <label className="block text-slate-300 font-semibold mb-1">Avg Buy Price (₹)</label>
+              <label className="block text-slate-700 font-bold mb-1">Avg Buy Price (₹)</label>
               <input
                 type="number"
                 step="any"
@@ -196,34 +196,34 @@ export const AddHoldingModal: React.FC<AddHoldingModalProps> = ({
                 value={averageBuyPrice}
                 onChange={(e) => setAverageBuyPrice(e.target.value)}
                 required
-                className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-white/10 text-white focus:outline-none focus:border-emerald-500"
+                className="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-slate-900 font-medium focus:outline-none focus:border-emerald-500"
               />
             </div>
 
             <div>
-              <label className="block text-slate-300 font-semibold mb-1">Purchase Date</label>
+              <label className="block text-slate-700 font-bold mb-1">Purchase Date</label>
               <input
                 type="date"
                 value={purchaseDate}
                 onChange={(e) => setPurchaseDate(e.target.value)}
                 required
-                className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-white/10 text-white focus:outline-none focus:border-emerald-500"
+                className="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-slate-900 font-medium focus:outline-none focus:border-emerald-500"
               />
             </div>
           </div>
 
-          <div className="flex items-center justify-end space-x-3 pt-3 border-t border-white/10">
+          <div className="flex items-center justify-end space-x-3 pt-3 border-t border-slate-100">
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 text-xs font-semibold rounded-xl bg-slate-800 text-slate-300 hover:bg-slate-700 transition cursor-pointer"
+              className="px-4 py-2 text-xs font-bold rounded-xl bg-slate-100 text-slate-700 hover:bg-slate-200 transition cursor-pointer"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={loading}
-              className="px-5 py-2 text-xs font-bold rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 shadow-lg shadow-emerald-500/25 transition cursor-pointer disabled:opacity-50"
+              className="px-5 py-2 text-xs font-bold rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white shadow-md shadow-emerald-600/20 transition cursor-pointer disabled:opacity-50"
             >
               {loading ? "Adding..." : "Add Position"}
             </button>

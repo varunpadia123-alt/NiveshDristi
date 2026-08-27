@@ -2,214 +2,214 @@
 
 import React, { useState } from "react";
 import { 
-  ShieldAlert, 
-  RefreshCw, 
   TrendingUp, 
+  RefreshCw, 
   Plus, 
+  Shield, 
   SlidersHorizontal,
-  ChevronDown,
+  PieChart,
+  Search,
+  Rocket,
+  Landmark,
   Layers,
-  Sparkles
+  BrainCircuit,
+  BarChart3
 } from "lucide-react";
 import { triggerBrokerSync, updateRiskProfile } from "@/lib/api";
 
+export type NavTab = "portfolio" | "screener" | "ipos" | "bonds" | "etfs" | "intelligence" | "backtest";
+
 interface NavbarProps {
+  activeTab: NavTab;
+  onSelectTab: (tab: NavTab) => void;
   brokerConnected: string;
   riskScore: number;
   onRefresh: () => void;
   onOpenAddModal: () => void;
-  onOpenBacktest: () => void;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
-  brokerConnected,
-  riskScore,
+  activeTab,
+  onSelectTab,
+  brokerConnected = "Zerodha Kite",
+  riskScore = 6,
   onRefresh,
   onOpenAddModal,
-  onOpenBacktest
 }) => {
   const [isSyncing, setIsSyncing] = useState(false);
-  const [selectedBroker, setSelectedBroker] = useState(brokerConnected || "Zerodha Kite");
-  const [currentRisk, setCurrentRisk] = useState(riskScore || 6);
-  const [showBrokerMenu, setShowBrokerMenu] = useState(false);
-  const [showRiskMenu, setShowRiskMenu] = useState(false);
+  const [currentBroker, setCurrentBroker] = useState(brokerConnected);
+  const [currentRisk, setCurrentRisk] = useState(riskScore);
+  const [isRiskMenuOpen, setIsRiskMenuOpen] = useState(false);
 
-  const brokers = ["Zerodha Kite", "Upstox", "Groww", "AngelOne"];
-
-  const handleBrokerChange = async (broker: string) => {
-    setSelectedBroker(broker);
-    setShowBrokerMenu(false);
+  const handleBrokerChange = async (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const newBroker = e.target.value;
+    setCurrentBroker(newBroker);
     setIsSyncing(true);
     try {
-      await triggerBrokerSync(broker);
-      await updateRiskProfile(currentRisk, broker);
+      await triggerBrokerSync(newBroker);
       onRefresh();
-    } catch (e) {
-      console.error(e);
+    } catch (err) {
+      console.error("Broker sync failed:", err);
     } finally {
       setIsSyncing(false);
     }
   };
 
-  const handleRiskChange = async (score: number) => {
-    setCurrentRisk(score);
-    setShowRiskMenu(false);
+  const handleRiskChange = async (newScore: number) => {
+    setCurrentRisk(newScore);
+    setIsRiskMenuOpen(false);
     try {
-      await updateRiskProfile(score, selectedBroker);
+      await updateRiskProfile(newScore, currentBroker);
       onRefresh();
-    } catch (e) {
-      console.error(e);
+    } catch (err) {
+      console.error("Failed to update risk profile:", err);
     }
   };
 
-  const handleManualSync = async () => {
-    setIsSyncing(true);
-    try {
-      await triggerBrokerSync(selectedBroker);
-      onRefresh();
-    } catch (e) {
-      console.error(e);
-    } finally {
-      setIsSyncing(false);
-    }
-  };
-
-  const getRiskLabel = (score: number) => {
-    if (score <= 3) return { label: "Conservative", color: "text-blue-400 border-blue-500/30 bg-blue-500/10" };
-    if (score <= 6) return { label: "Moderate", color: "text-amber-400 border-amber-500/30 bg-amber-500/10" };
-    return { label: "Aggressive", color: "text-rose-400 border-rose-500/30 bg-rose-500/10" };
-  };
-
-  const riskBadge = getRiskLabel(currentRisk);
+  const navItems: { id: NavTab; label: string; icon: React.ReactNode; badge?: string }[] = [
+    { id: "portfolio", label: "Portfolio", icon: <PieChart className="w-4 h-4" /> },
+    { id: "screener", label: "Stock Screener", icon: <Search className="w-4 h-4" />, badge: "Live" },
+    { id: "ipos", label: "IPOs", icon: <Rocket className="w-4 h-4" /> },
+    { id: "bonds", label: "Bonds & SGB", icon: <Landmark className="w-4 h-4" /> },
+    { id: "etfs", label: "ETFs", icon: <Layers className="w-4 h-4" /> },
+    { id: "intelligence", label: "Pro Analytics", icon: <BrainCircuit className="w-4 h-4" />, badge: "AI" },
+    { id: "backtest", label: "Backtest", icon: <BarChart3 className="w-4 h-4" /> },
+  ];
 
   return (
-    <header className="sticky top-0 z-40 w-full border-b border-white/10 glass-card bg-slate-950/80 backdrop-blur-xl">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+    <header className="sticky top-0 z-40 w-full bg-white/95 backdrop-blur-md border-b border-slate-200 shadow-xs">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         
-        {/* Brand Logo */}
-        <div className="flex items-center space-x-3">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-emerald-600 via-teal-500 to-cyan-400 flex items-center justify-center shadow-lg shadow-emerald-500/20 ring-1 ring-white/20">
-            <TrendingUp className="w-5 h-5 text-white" />
-          </div>
-          <div>
-            <div className="flex items-center space-x-2">
-              <span className="font-extrabold text-xl tracking-tight bg-gradient-to-r from-white via-slate-200 to-emerald-400 bg-clip-text text-transparent">
-                NiveshDristi
-              </span>
-              <span className="px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 rounded-md">
-                Algorithmic Co-Pilot
-              </span>
-            </div>
-            <p className="text-[11px] text-slate-400 flex items-center gap-1.5">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
-              NSE Real-Time Multi-Indicator Engine
-            </p>
-          </div>
-        </div>
-
-        {/* Action Controls */}
-        <div className="flex items-center space-x-3">
+        {/* Top Header Row */}
+        <div className="flex items-center justify-between h-16 gap-4">
           
-          {/* Backtesting Sandbox Button */}
-          <button
-            onClick={onOpenBacktest}
-            className="hidden md:flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-indigo-500/10 text-indigo-300 border border-indigo-500/30 hover:bg-indigo-500/20 transition cursor-pointer"
-            title="Open Historical Strategy Backtesting Sandbox"
-          >
-            <Sparkles className="w-3.5 h-3.5 text-indigo-400" />
-            <span>Backtest Sandbox</span>
-          </button>
-
-          {/* Broker Sync Dropdown */}
-          <div className="relative">
-            <button
-              onClick={() => setShowBrokerMenu(!showBrokerMenu)}
-              className="flex items-center space-x-2 px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-900 border border-white/10 hover:border-white/20 transition cursor-pointer text-slate-200"
-            >
-              <Layers className="w-3.5 h-3.5 text-teal-400" />
-              <span>{selectedBroker}</span>
-              <ChevronDown className="w-3 h-3 text-slate-400" />
-            </button>
-
-            {showBrokerMenu && (
-              <div className="absolute right-0 mt-2 w-44 rounded-xl glass-card border border-white/15 shadow-2xl py-1 z-50 bg-slate-900/95 backdrop-blur-xl">
-                <div className="px-3 py-1.5 text-[10px] font-semibold text-slate-400 uppercase tracking-wider border-b border-white/5">
-                  Select Broker API
-                </div>
-                {brokers.map((b) => (
-                  <button
-                    key={b}
-                    onClick={() => handleBrokerChange(b)}
-                    className={`w-full text-left px-3 py-2 text-xs transition flex items-center justify-between ${
-                      selectedBroker === b ? "bg-emerald-500/15 text-emerald-300 font-medium" : "text-slate-300 hover:bg-white/5"
-                    }`}
-                  >
-                    <span>{b}</span>
-                    {selectedBroker === b && <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>}
-                  </button>
-                ))}
+          {/* Logo & Brand */}
+          <div className="flex items-center space-x-3 cursor-pointer" onClick={() => onSelectTab("portfolio")}>
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-emerald-600 via-teal-500 to-indigo-600 flex items-center justify-center shadow-md shadow-emerald-600/20 text-white">
+              <TrendingUp className="w-5 h-5" />
+            </div>
+            <div>
+              <div className="flex items-center space-x-1.5">
+                <span className="font-extrabold text-lg text-slate-900 tracking-tight">NiveshDristi</span>
+                <span className="text-[10px] uppercase font-bold tracking-widest px-1.5 py-0.5 rounded-md bg-emerald-100 text-emerald-800 border border-emerald-200">
+                  v2.0 Live
+                </span>
               </div>
-            )}
+              <p className="text-[11px] font-medium text-slate-500 hidden sm:block">
+                Intelligent Portfolio & Market Co-Pilot
+              </p>
+            </div>
           </div>
 
-          {/* Risk Profile Selector */}
-          <div className="relative">
+          {/* Quick Actions & Controls */}
+          <div className="flex items-center space-x-2.5">
+            
+            {/* Broker Dropdown */}
+            <div className="hidden md:flex items-center space-x-1.5 px-3 py-1.5 rounded-xl bg-slate-100 border border-slate-200 text-xs text-slate-700">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+              <span className="font-medium text-slate-500">Broker:</span>
+              <select
+                value={currentBroker}
+                onChange={handleBrokerChange}
+                disabled={isSyncing}
+                className="bg-transparent font-semibold text-slate-800 outline-none cursor-pointer"
+              >
+                <option value="Zerodha Kite">Zerodha Kite</option>
+                <option value="Groww">Groww</option>
+                <option value="Upstox">Upstox</option>
+                <option value="AngelOne">AngelOne</option>
+              </select>
+            </div>
+
+            {/* Risk Score Pill */}
+            <div className="relative">
+              <button
+                onClick={() => setIsRiskMenuOpen(!isRiskMenuOpen)}
+                className="flex items-center space-x-1.5 px-3 py-1.5 rounded-xl bg-indigo-50 border border-indigo-200 text-indigo-700 hover:bg-indigo-100 transition-colors text-xs font-semibold"
+              >
+                <Shield className="w-3.5 h-3.5 text-indigo-600" />
+                <span>Risk: {currentRisk}/10</span>
+                <SlidersHorizontal className="w-3 h-3 text-indigo-500 ml-1" />
+              </button>
+
+              {isRiskMenuOpen && (
+                <div className="absolute right-0 mt-2 w-56 p-3 rounded-2xl bg-white border border-slate-200 shadow-xl z-50 text-slate-800">
+                  <div className="text-xs font-bold text-slate-900 mb-2">Adjust Risk Tolerance</div>
+                  <div className="space-y-1.5">
+                    {[
+                      { score: 3, label: "Conservative (3/10)", desc: "Low Volatility & SGB" },
+                      { score: 6, label: "Moderate (6/10)", desc: "Balanced Large & Mid" },
+                      { score: 9, label: "Aggressive (9/10)", desc: "High Growth & Alpha" }
+                    ].map((item) => (
+                      <button
+                        key={item.score}
+                        onClick={() => handleRiskChange(item.score)}
+                        className={`w-full text-left p-2 rounded-lg text-xs transition-colors ${
+                          currentRisk === item.score
+                            ? "bg-indigo-600 text-white font-bold"
+                            : "hover:bg-slate-100 text-slate-700"
+                        }`}
+                      >
+                        <div className="font-semibold">{item.label}</div>
+                        <div className={`text-[10px] ${currentRisk === item.score ? "text-indigo-200" : "text-slate-500"}`}>
+                          {item.desc}
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Add Holding Button */}
             <button
-              onClick={() => setShowRiskMenu(!showRiskMenu)}
-              className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition cursor-pointer ${riskBadge.color}`}
+              onClick={onOpenAddModal}
+              className="flex items-center space-x-1.5 px-3.5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold shadow-sm transition-all active:scale-95 cursor-pointer"
             >
-              <SlidersHorizontal className="w-3.5 h-3.5" />
-              <span>Risk: {currentRisk}/10 ({riskBadge.label})</span>
-              <ChevronDown className="w-3 h-3 opacity-70" />
+              <Plus className="w-4 h-4" />
+              <span className="hidden sm:inline">Add Holding</span>
             </button>
 
-            {showRiskMenu && (
-              <div className="absolute right-0 mt-2 w-48 rounded-xl glass-card border border-white/15 shadow-2xl p-2 z-50 bg-slate-900/95 backdrop-blur-xl">
-                <div className="px-2 py-1 text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
-                  Risk Guardrail Scale (1-10)
-                </div>
-                <div className="grid grid-cols-5 gap-1 my-1.5">
-                  {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((num) => (
-                    <button
-                      key={num}
-                      onClick={() => handleRiskChange(num)}
-                      className={`h-7 rounded-md text-xs font-bold transition flex items-center justify-center ${
-                        currentRisk === num
-                          ? "bg-emerald-500 text-slate-950 shadow-md shadow-emerald-500/30"
-                          : "bg-slate-800 text-slate-300 hover:bg-slate-700"
-                      }`}
-                    >
-                      {num}
-                    </button>
-                  ))}
-                </div>
-                <div className="text-[10px] text-slate-400 px-1 pt-1 border-t border-white/5">
-                  Protects swap suggestions from high-beta volatility traps.
-                </div>
-              </div>
-            )}
+            {/* Sync / Refresh Button */}
+            <button
+              onClick={onRefresh}
+              disabled={isSyncing}
+              title="Refresh live metrics"
+              className="p-2 rounded-xl bg-slate-100 hover:bg-slate-200 border border-slate-200 text-slate-600 hover:text-slate-900 transition-colors cursor-pointer"
+            >
+              <RefreshCw className={`w-4 h-4 ${isSyncing ? "animate-spin text-emerald-600" : ""}`} />
+            </button>
           </div>
-
-          {/* Refresh / Sync Button */}
-          <button
-            onClick={handleManualSync}
-            disabled={isSyncing}
-            className="p-2 rounded-lg bg-slate-900 border border-white/10 text-slate-300 hover:text-white hover:border-white/20 transition cursor-pointer disabled:opacity-50"
-            title="Re-compute indicators and sync quotes"
-          >
-            <RefreshCw className={`w-4 h-4 text-slate-300 ${isSyncing ? "animate-spin text-emerald-400" : ""}`} />
-          </button>
-
-          {/* Add Holding Button */}
-          <button
-            onClick={onOpenAddModal}
-            className="flex items-center space-x-1.5 px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-emerald-500 hover:bg-emerald-400 text-slate-950 shadow-lg shadow-emerald-500/25 transition cursor-pointer font-sans"
-          >
-            <Plus className="w-4 h-4 stroke-[2.5]" />
-            <span>Add Asset</span>
-          </button>
-
         </div>
+
+        {/* Tab Navigation Row */}
+        <div className="flex items-center space-x-1 overflow-x-auto py-2 border-t border-slate-100 no-scrollbar">
+          {navItems.map((tab) => {
+            const isActive = activeTab === tab.id;
+            return (
+              <button
+                key={tab.id}
+                onClick={() => onSelectTab(tab.id)}
+                className={`flex items-center space-x-2 px-3.5 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${
+                  isActive
+                    ? "bg-slate-900 text-white shadow-xs"
+                    : "text-slate-600 hover:text-slate-900 hover:bg-slate-100"
+                }`}
+              >
+                {tab.icon}
+                <span>{tab.label}</span>
+                {tab.badge && (
+                  <span className={`text-[9px] font-bold px-1.5 py-0.2 rounded-full ${
+                    isActive ? "bg-emerald-400 text-slate-950" : "bg-emerald-100 text-emerald-800"
+                  }`}>
+                    {tab.badge}
+                  </span>
+                )}
+              </button>
+            );
+          })}
+        </div>
+
       </div>
     </header>
   );

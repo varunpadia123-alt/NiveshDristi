@@ -2,83 +2,85 @@
 
 @layer base {
   :root {
-    --bg-primary: #070a12;
-    --bg-card: rgba(15, 23, 42, 0.75);
-    --border-card: rgba(255, 255, 255, 0.08);
+    --bg-primary: #f8fafc;
+    --bg-card: #ffffff;
+    --border-card: #e2e8f0;
+    --text-primary: #0f172a;
+    --text-secondary: #475569;
+    --text-muted: #64748b;
   }
 
   body {
-    background-color: #070a12;
-    color: #f1f5f9;
+    background-color: #f8fafc;
+    color: #0f172a;
     font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
     min-height: 100vh;
     background-image: 
-      radial-gradient(at 15% 15%, rgba(16, 185, 129, 0.06) 0px, transparent 50%),
-      radial-gradient(at 85% 15%, rgba(99, 102, 241, 0.08) 0px, transparent 50%),
-      radial-gradient(at 50% 85%, rgba(6, 182, 212, 0.05) 0px, transparent 50%);
+      radial-gradient(at 15% 10%, rgba(16, 185, 129, 0.04) 0px, transparent 45%),
+      radial-gradient(at 85% 15%, rgba(99, 102, 241, 0.05) 0px, transparent 45%),
+      radial-gradient(at 50% 90%, rgba(14, 165, 233, 0.04) 0px, transparent 50%);
     background-attachment: fixed;
   }
 }
 
-/* Custom Scrollbar */
+/* Custom Clean Scrollbar */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
 }
 
 ::-webkit-scrollbar-track {
-  background: rgba(15, 23, 42, 0.6);
+  background: #f1f5f9;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(100, 116, 139, 0.4);
+  background: #cbd5e1;
   border-radius: 9999px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(148, 163, 184, 0.6);
+  background: #94a3b8;
 }
 
-/* Glow & Glass Utilities */
-.glass-card {
-  background: rgba(15, 23, 42, 0.7);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(255, 255, 255, 0.07);
+/* Crisp Light Cards */
+.light-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.04), 0 1px 2px -1px rgba(0, 0, 0, 0.03);
 }
 
-.glass-card-hover {
+.light-card-hover {
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
-.glass-card-hover:hover {
-  border-color: rgba(255, 255, 255, 0.15);
-  box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
+.light-card-hover:hover {
+  border-color: #cbd5e1;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.06), 0 8px 10px -6px rgba(0, 0, 0, 0.04);
   transform: translateY(-2px);
 }
 
-/* Action Badges */
+/* Financial Badges */
 .badge-hold {
-  background: rgba(16, 185, 129, 0.12);
-  color: #34d399;
-  border: 1px solid rgba(16, 185, 129, 0.3);
+  background: #ecfdf5;
+  color: #059669;
+  border: 1px solid #a7f3d0;
 }
 
 .badge-sell {
-  background: rgba(239, 68, 68, 0.12);
-  color: #f87171;
-  border: 1px solid rgba(239, 68, 68, 0.3);
+  background: #fef2f2;
+  color: #dc2626;
+  border: 1px solid #fecaca;
 }
 
 .badge-swap {
-  background: rgba(245, 158, 11, 0.12);
-  color: #fbbf24;
-  border: 1px solid rgba(245, 158, 11, 0.3);
+  background: #fffbeb;
+  color: #d97706;
+  border: 1px solid #fde68a;
 }
 
-/* Pulse animation */
+/* Micro Animations */
 @keyframes pulse-glow {
-  0%, 100% { opacity: 0.6; transform: scale(1); }
-  50% { opacity: 1; transform: scale(1.04); }
+  0%, 100% { opacity: 0.8; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.03); }
 }
 
 .animate-pulse-slow {
