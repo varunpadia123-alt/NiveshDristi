@@ -4,7 +4,7 @@ from app.config import settings
 from app.database import Base, engine, SessionLocal
 from app.models import UserProfile
 from app.engine.broker_sync import sync_broker_portfolio
-from app.routers import portfolio, analysis, backtest, risk
+from app.routers import portfolio, analysis, backtest, risk, markets, discovery, intelligence
 
 # Create Database Tables
 Base.metadata.create_all(bind=engine)
@@ -29,6 +29,9 @@ app.include_router(portfolio.router, prefix=settings.API_V1_STR)
 app.include_router(analysis.router, prefix=settings.API_V1_STR)
 app.include_router(backtest.router, prefix=settings.API_V1_STR)
 app.include_router(risk.router, prefix=settings.API_V1_STR)
+app.include_router(markets.router, prefix=settings.API_V1_STR)
+app.include_router(discovery.router, prefix=settings.API_V1_STR)
+app.include_router(intelligence.router, prefix=settings.API_V1_STR)
 
 @app.on_event("startup")
 def startup_db_seed():

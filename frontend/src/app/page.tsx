@@ -7,7 +7,7 @@ import {
   deleteHolding 
 } from "@/lib/api";
 import { PortfolioSummary, Holding } from "@/types";
-import { Navbar } from "@/components/Navbar";
+import { Navbar, NavTab } from "@/components/Navbar";
 import { PortfolioOverview } from "@/components/PortfolioOverview";
 import { SectorHeatmap } from "@/components/SectorHeatmap";
 import { HoldingsTable } from "@/components/HoldingsTable";
@@ -15,9 +15,32 @@ import { SwapModal } from "@/components/SwapModal";
 import { TechnicalDrawer } from "@/components/TechnicalDrawer";
 import { BacktestSandbox } from "@/components/BacktestSandbox";
 import { AddHoldingModal } from "@/components/AddHoldingModal";
-import { Sparkles, ShieldAlert, CheckCircle2, AlertCircle } from "lucide-react";
+import { MarketScreener } from "@/components/MarketScreener";
+import { IpoSection } from "@/components/IpoSection";
+import { BondsSection } from "@/components/BondsSection";
+import { EtfsSection } from "@/components/EtfsSection";
+import { StressTestingView } from "@/components/StressTestingView";
+import { RebalancingAlertsView } from "@/components/RebalancingAlertsView";
+import { TaxLossHarvestingView } from "@/components/TaxLossHarvestingView";
+import { CorrelationMatrixView } from "@/components/CorrelationMatrixView";
+import { OptionsScreenerView } from "@/components/OptionsScreenerView";
+
+import { 
+  Sparkles, 
+  CheckCircle2, 
+  AlertCircle, 
+  ShieldAlert, 
+  Scale, 
+  ReceiptText, 
+  Network, 
+  Zap,
+  Layers
+} from "lucide-react";
 
 export default function DashboardPage() {
+  const [activeTab, setActiveTab] = useState<NavTab>("portfolio");
+  const [proSubTab, setProSubTab] = useState<"stress" | "rebalance" | "tax" | "correlation" | "options">("stress");
+
   const [summary, setSummary] = useState<PortfolioSummary | null>(null);
   const [holdings, setHoldings] = useState<Holding[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
@@ -43,7 +66,7 @@ export default function DashboardPage() {
       setHoldings(hld);
     } catch (err: any) {
       console.error(err);
-      setError("Unable to connect to NiveshDristi backend engine. Ensure FastAPI server is running.");
+      setError("Unable to connect to NiveshDristi backend engine. Ensure FastAPI server is running on port 8000.");
     } finally {
       setLoading(false);
     }
@@ -75,11 +98,11 @@ export default function DashboardPage() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-slate-950 text-slate-100 selection:bg-emerald-500 selection:text-slate-950">
+    <div className="min-h-screen flex flex-col bg-slate-50 text-slate-900 selection:bg-emerald-100 selection:text-emerald-900">
       
       {/* Toast Notification */}
       {toastMessage && (
-        <div className="fixed bottom-6 right-6 z-50 flex items-center space-x-2 px-4 py-3 rounded-2xl bg-emerald-500 text-slate-950 font-bold text-xs shadow-2xl shadow-emerald-500/30 animate-bounce">
+        <div className="fixed bottom-6 right-6 z-50 flex items-center space-x-2 px-4 py-3 rounded-2xl bg-emerald-600 text-white font-bold text-xs shadow-2xl shadow-emerald-600/30 animate-bounce">
           <CheckCircle2 className="w-4 h-4" />
           <span>{toastMessage}</span>
         </div>
@@ -87,63 +110,137 @@ export default function DashboardPage() {
 
       {/* Top Navbar */}
       <Navbar
+        activeTab={activeTab}
+        onSelectTab={(tab) => {
+          if (tab === "backtest") {
+            setIsBacktestOpen(true);
+          } else {
+            setActiveTab(tab);
+          }
+        }}
         brokerConnected={summary?.broker_connected || "Zerodha Kite"}
         riskScore={6}
         onRefresh={loadData}
         onOpenAddModal={() => setIsAddModalOpen(true)}
-        onOpenBacktest={() => setIsBacktestOpen(true)}
       />
 
-      {/* Main Dashboard Container */}
+      {/* Main Container */}
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
         
         {/* Error Banner */}
         {error && (
-          <div className="p-4 rounded-2xl bg-rose-500/15 border border-rose-500/30 text-rose-300 text-xs flex items-center justify-between">
+          <div className="p-4 rounded-2xl bg-rose-50 border border-rose-200 text-rose-800 text-xs flex items-center justify-between">
             <div className="flex items-center space-x-2">
-              <AlertCircle className="w-4 h-4 text-rose-400 flex-shrink-0" />
-              <span>{error}</span>
+              <AlertCircle className="w-4 h-4 text-rose-600 flex-shrink-0" />
+              <span className="font-semibold">{error}</span>
             </div>
             <button
               onClick={loadData}
-              className="px-3 py-1 bg-rose-500 text-white rounded-lg text-xs font-semibold hover:bg-rose-400"
+              className="px-3 py-1 bg-rose-600 text-white rounded-lg text-xs font-bold hover:bg-rose-700 cursor-pointer"
             >
               Retry
             </button>
           </div>
         )}
 
-        {/* 1. Portfolio KPI Overview Cards */}
-        <PortfolioOverview summary={summary} loading={loading} />
+        {/* 1. PORTFOLIO TAB */}
+        {activeTab === "portfolio" && (
+          <div className="space-y-6">
+            <PortfolioOverview summary={summary} loading={loading} />
 
-        {/* 2. Sector Exposure Heatmap with 25% Guardrail */}
-        {summary && summary.sector_exposures && (
-          <SectorHeatmap
-            exposures={summary.sector_exposures}
-            selectedSector={selectedSectorFilter}
-            onSelectSector={(sec) => setSelectedSectorFilter(sec || null)}
+            {summary && summary.sector_exposures && (
+              <SectorHeatmap
+                exposures={summary.sector_exposures}
+                selectedSector={selectedSectorFilter}
+                onSelectSector={(sec) => setSelectedSectorFilter(sec || null)}
+              />
+            )}
+
+            <HoldingsTable
+              holdings={holdings}
+              loading={loading}
+              selectedSectorFilter={selectedSectorFilter}
+              onClearSectorFilter={() => setSelectedSectorFilter(null)}
+              onOpenSwapModal={(h) => setSelectedHoldingForSwap(h)}
+              onOpenTechnicalDrawer={(t) => setSelectedTickerForDrawer(t)}
+              onDeleteHolding={handleDeleteHolding}
+            />
+          </div>
+        )}
+
+        {/* 2. STOCK SCREENER & MARKET TAB (Groww-like) */}
+        {activeTab === "screener" && (
+          <MarketScreener
+            onOpenTechnicalDrawer={(t) => setSelectedTickerForDrawer(t)}
           />
         )}
 
-        {/* 3. Holdings Management & Actionable Signals Table */}
-        <HoldingsTable
-          holdings={holdings}
-          loading={loading}
-          selectedSectorFilter={selectedSectorFilter}
-          onClearSectorFilter={() => setSelectedSectorFilter(null)}
-          onOpenSwapModal={(h) => setSelectedHoldingForSwap(h)}
-          onOpenTechnicalDrawer={(t) => setSelectedTickerForDrawer(t)}
-          onDeleteHolding={handleDeleteHolding}
-        />
+        {/* 3. IPOs HUB TAB */}
+        {activeTab === "ipos" && (
+          <IpoSection />
+        )}
+
+        {/* 4. BONDS & SGB HUB TAB */}
+        {activeTab === "bonds" && (
+          <BondsSection />
+        )}
+
+        {/* 5. ETFs CATALOG TAB */}
+        {activeTab === "etfs" && (
+          <EtfsSection
+            onOpenTechnicalDrawer={(t) => setSelectedTickerForDrawer(t)}
+          />
+        )}
+
+        {/* 6. PRO ANALYTICS TAB */}
+        {activeTab === "intelligence" && (
+          <div className="space-y-6">
+            
+            {/* Sub-Navigation Tabs */}
+            <div className="light-card rounded-2xl p-2 bg-white border border-slate-200 flex flex-wrap items-center gap-1.5 shadow-xs">
+              {[
+                { id: "stress", label: "Stress Testing", icon: <ShieldAlert className="w-4 h-4" />, desc: "Nifty -20% Shock" },
+                { id: "rebalance", label: "Rebalancing Alerts", icon: <Scale className="w-4 h-4" />, desc: "Allocation Drift" },
+                { id: "tax", label: "Tax-Loss Harvesting", icon: <ReceiptText className="w-4 h-4" />, desc: "Offset Gains" },
+                { id: "correlation", label: "Correlation Matrix", icon: <Network className="w-4 h-4" />, desc: "Holding Co-Movement" },
+                { id: "options", label: "Options Screener", icon: <Zap className="w-4 h-4" />, desc: "RSI Call/Put Signals" },
+              ].map((sub) => {
+                const isCurrent = proSubTab === sub.id;
+                return (
+                  <button
+                    key={sub.id}
+                    onClick={() => setProSubTab(sub.id as any)}
+                    className={`flex items-center space-x-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                      isCurrent
+                        ? "bg-slate-900 text-white shadow-xs"
+                        : "text-slate-600 hover:text-slate-900 hover:bg-slate-100"
+                    }`}
+                  >
+                    {sub.icon}
+                    <span>{sub.label}</span>
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Sub-Views */}
+            {proSubTab === "stress" && <StressTestingView />}
+            {proSubTab === "rebalance" && <RebalancingAlertsView />}
+            {proSubTab === "tax" && <TaxLossHarvestingView />}
+            {proSubTab === "correlation" && <CorrelationMatrixView />}
+            {proSubTab === "options" && <OptionsScreenerView />}
+
+          </div>
+        )}
 
       </main>
 
       {/* Footer */}
-      <footer className="w-full border-t border-white/5 py-6 text-center text-xs text-slate-500">
+      <footer className="w-full border-t border-slate-200 py-6 text-center text-xs text-slate-500 bg-white">
         <div className="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-2">
-          <p>© {new Date().getFullYear()} NiveshDristi Algorithmic Co-Pilot. All rights reserved.</p>
-          <p className="text-[11px] text-slate-600 max-w-lg text-right">
-            NiveshDristi computes automated technical indicators via pandas-ta & FinBERT NLP. Not SEBI registered investment advice.
+          <p className="font-semibold">© {new Date().getFullYear()} NiveshDristi Algorithmic Co-Pilot. All rights reserved.</p>
+          <p className="text-[11px] text-slate-400 max-w-lg text-right">
+            NiveshDristi computes automated technical indicators via pandas-ta, FinBERT NLP & multi-asset financial modeling. Not fiduciary investment advice.
           </p>
         </div>
       </footer>

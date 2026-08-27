@@ -93,7 +93,7 @@ export const BacktestSandbox: React.FC<BacktestSandboxProps> = ({ isOpen, onClos
       {
         label: "NiveshDristi Co-Pilot Strategy",
         data: strategyData,
-        borderColor: "#10b981",
+        borderColor: "#059669",
         backgroundColor: "rgba(16, 185, 129, 0.08)",
         borderWidth: 2.5,
         fill: true,
@@ -103,7 +103,7 @@ export const BacktestSandbox: React.FC<BacktestSandboxProps> = ({ isOpen, onClos
       {
         label: "Buy & Hold Benchmark",
         data: benchmarkData,
-        borderColor: "#64748b",
+        borderColor: "#94a3b8",
         backgroundColor: "transparent",
         borderWidth: 1.5,
         borderDash: [4, 4],
@@ -120,15 +120,15 @@ export const BacktestSandbox: React.FC<BacktestSandboxProps> = ({ isOpen, onClos
       legend: {
         position: "top" as const,
         labels: {
-          color: "#94a3b8",
-          font: { size: 11, family: "inherit" }
+          color: "#475569",
+          font: { size: 11, family: "inherit", weight: "bold" as const }
         }
       },
       tooltip: {
         mode: "index" as const,
         intersect: false,
-        backgroundColor: "rgba(15, 23, 42, 0.95)",
-        borderColor: "rgba(255, 255, 255, 0.1)",
+        backgroundColor: "#0f172a",
+        borderColor: "#e2e8f0",
         borderWidth: 1,
         titleColor: "#f8fafc",
         bodyColor: "#cbd5e1"
@@ -136,11 +136,11 @@ export const BacktestSandbox: React.FC<BacktestSandboxProps> = ({ isOpen, onClos
     },
     scales: {
       x: {
-        grid: { color: "rgba(255, 255, 255, 0.04)" },
+        grid: { color: "#f1f5f9" },
         ticks: { color: "#64748b", font: { size: 10 } }
       },
       y: {
-        grid: { color: "rgba(255, 255, 255, 0.04)" },
+        grid: { color: "#f1f5f9" },
         ticks: {
           color: "#64748b",
           font: { size: 10 },
@@ -151,49 +151,49 @@ export const BacktestSandbox: React.FC<BacktestSandboxProps> = ({ isOpen, onClos
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md overflow-y-auto">
-      <div className="relative w-full max-w-4xl glass-card rounded-3xl border border-white/15 shadow-2xl p-6 sm:p-8 bg-slate-900/95 my-8">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-md overflow-y-auto">
+      <div className="relative w-full max-w-4xl light-card rounded-3xl border border-slate-200 shadow-2xl p-6 sm:p-8 bg-white my-8">
         
         {/* Close Button */}
         <button
           onClick={onClose}
-          className="absolute top-5 right-5 p-2 rounded-xl text-slate-400 hover:text-white hover:bg-white/10 transition cursor-pointer"
+          className="absolute top-5 right-5 p-2 rounded-xl text-slate-400 hover:text-slate-900 hover:bg-slate-100 transition cursor-pointer"
         >
           <X className="w-5 h-5" />
         </button>
 
         {/* Header */}
         <div className="flex items-center space-x-3 mb-6">
-          <div className="w-10 h-10 rounded-2xl bg-indigo-500/15 text-indigo-400 border border-indigo-500/30 flex items-center justify-center shadow-lg shadow-indigo-500/10">
+          <div className="w-10 h-10 rounded-2xl bg-indigo-50 text-indigo-600 border border-indigo-100 flex items-center justify-center shadow-xs">
             <Sparkles className="w-5 h-5" />
           </div>
           <div>
             <div className="flex items-center space-x-2">
-              <h2 className="text-xl font-extrabold text-white tracking-tight">
+              <h2 className="text-xl font-black text-slate-900 tracking-tight">
                 Algorithmic Backtesting Sandbox
               </h2>
-              <span className="px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 rounded-md">
+              <span className="px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider bg-indigo-100 text-indigo-900 border border-indigo-200 rounded-md">
                 Quantitative Audit
               </span>
             </div>
-            <p className="text-xs text-slate-400 mt-0.5">
+            <p className="text-xs text-slate-500 mt-0.5 font-medium">
               Simulates historical performance comparing NiveshDristi rules-based signals vs Buy & Hold.
             </p>
           </div>
         </div>
 
         {/* Selectors Bar */}
-        <div className="flex flex-wrap items-center justify-between gap-3 p-4 rounded-2xl glass-card border border-white/10 bg-slate-950/50 mb-6">
+        <div className="flex flex-wrap items-center justify-between gap-3 p-4 rounded-2xl border border-slate-200 bg-slate-50 mb-6">
           
           <div className="flex items-center space-x-3">
-            <span className="text-xs font-semibold text-slate-300">Ticker:</span>
+            <span className="text-xs font-bold text-slate-700">Ticker:</span>
             <select
               value={selectedTicker}
               onChange={(e) => {
                 setSelectedTicker(e.target.value);
                 executeRun(e.target.value, timeframeYears);
               }}
-              className="px-3 py-1.5 rounded-lg bg-slate-900 border border-white/10 text-xs font-medium text-white focus:outline-none focus:border-indigo-500"
+              className="px-3 py-1.5 rounded-xl bg-white border border-slate-200 text-xs font-bold text-slate-900 focus:outline-none focus:border-indigo-500"
             >
               {stockList.map((s) => (
                 <option key={s.ticker} value={s.ticker}>
@@ -204,8 +204,8 @@ export const BacktestSandbox: React.FC<BacktestSandboxProps> = ({ isOpen, onClos
           </div>
 
           <div className="flex items-center space-x-2">
-            <span className="text-xs font-semibold text-slate-300">Timeframe:</span>
-            <div className="flex items-center rounded-lg bg-slate-900 border border-white/10 p-0.5 text-xs">
+            <span className="text-xs font-bold text-slate-700">Timeframe:</span>
+            <div className="flex items-center rounded-xl bg-slate-200/70 border border-slate-200 p-0.5 text-xs font-bold">
               {[1, 3, 5].map((y) => (
                 <button
                   key={y}
@@ -213,10 +213,10 @@ export const BacktestSandbox: React.FC<BacktestSandboxProps> = ({ isOpen, onClos
                     setTimeframeYears(y);
                     executeRun(selectedTicker, y);
                   }}
-                  className={`px-3 py-1 rounded-md font-semibold transition cursor-pointer ${
+                  className={`px-3 py-1 rounded-lg transition cursor-pointer ${
                     timeframeYears === y
-                      ? "bg-indigo-500 text-white shadow"
-                      : "text-slate-400 hover:text-white"
+                      ? "bg-white text-slate-900 shadow-xs"
+                      : "text-slate-600 hover:text-slate-900"
                   }`}
                 >
                   {y}Y
@@ -228,12 +228,12 @@ export const BacktestSandbox: React.FC<BacktestSandboxProps> = ({ isOpen, onClos
         </div>
 
         {loading ? (
-          <div className="py-24 text-center text-slate-400 flex flex-col items-center justify-center space-y-3">
-            <div className="w-8 h-8 rounded-full border-3 border-indigo-400 border-t-transparent animate-spin"></div>
-            <p className="text-xs">Computing historical multi-indicator backtest over {timeframeYears} years...</p>
+          <div className="py-24 text-center text-slate-500 flex flex-col items-center justify-center space-y-3">
+            <div className="w-8 h-8 rounded-full border-3 border-indigo-500 border-t-transparent animate-spin"></div>
+            <p className="text-xs font-semibold">Computing historical multi-indicator backtest over {timeframeYears} years...</p>
           </div>
         ) : error ? (
-          <div className="p-4 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-300 text-xs mb-6">
+          <div className="p-4 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-xs mb-6 font-semibold">
             {error}
           </div>
         ) : data ? (
@@ -241,35 +241,35 @@ export const BacktestSandbox: React.FC<BacktestSandboxProps> = ({ isOpen, onClos
 
             {/* KPI Cards */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-              <div className="p-3.5 rounded-xl bg-slate-950 border border-white/5">
-                <div className="text-[10px] text-slate-400 font-semibold mb-1">Strategy CAGR</div>
-                <div className={`font-mono font-bold text-base ${data.cagr_strategy_pct >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
+              <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200">
+                <div className="text-[10px] text-slate-500 font-semibold mb-1">Strategy CAGR</div>
+                <div className={`font-mono font-black text-base ${data.cagr_strategy_pct >= 0 ? "text-emerald-600" : "text-rose-600"}`}>
                   {data.cagr_strategy_pct > 0 ? `+${data.cagr_strategy_pct.toFixed(2)}` : data.cagr_strategy_pct.toFixed(2)}%
                 </div>
-                <div className="text-[10px] text-slate-500">Benchmark: {data.cagr_buy_hold_pct.toFixed(2)}%</div>
+                <div className="text-[10px] text-slate-400">Benchmark: {data.cagr_buy_hold_pct.toFixed(2)}%</div>
               </div>
 
-              <div className="p-3.5 rounded-xl bg-slate-950 border border-white/5">
-                <div className="text-[10px] text-slate-400 font-semibold mb-1">Win Rate</div>
-                <div className="font-mono font-bold text-base text-white">{data.win_rate_pct.toFixed(1)}%</div>
-                <div className="text-[10px] text-slate-500">{data.total_trades} trades executed</div>
+              <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200">
+                <div className="text-[10px] text-slate-500 font-semibold mb-1">Win Rate</div>
+                <div className="font-mono font-black text-base text-slate-900">{data.win_rate_pct.toFixed(1)}%</div>
+                <div className="text-[10px] text-slate-400">{data.total_trades} trades executed</div>
               </div>
 
-              <div className="p-3.5 rounded-xl bg-slate-950 border border-white/5">
-                <div className="text-[10px] text-slate-400 font-semibold mb-1">Sharpe Ratio</div>
-                <div className="font-mono font-bold text-base text-teal-300">{data.sharpe_ratio.toFixed(2)}</div>
-                <div className="text-[10px] text-slate-500">Risk-adjusted return</div>
+              <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200">
+                <div className="text-[10px] text-slate-500 font-semibold mb-1">Sharpe Ratio</div>
+                <div className="font-mono font-black text-base text-indigo-600">{data.sharpe_ratio.toFixed(2)}</div>
+                <div className="text-[10px] text-slate-400">Risk-adjusted return</div>
               </div>
 
-              <div className="p-3.5 rounded-xl bg-slate-950 border border-white/5">
-                <div className="text-[10px] text-slate-400 font-semibold mb-1">Max Drawdown</div>
-                <div className="font-mono font-bold text-base text-rose-400">-{data.max_drawdown_pct.toFixed(1)}%</div>
-                <div className="text-[10px] text-slate-500">Capital preservation</div>
+              <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200">
+                <div className="text-[10px] text-slate-500 font-semibold mb-1">Max Drawdown</div>
+                <div className="font-mono font-black text-base text-rose-600">-{data.max_drawdown_pct.toFixed(1)}%</div>
+                <div className="text-[10px] text-slate-400">Capital preservation</div>
               </div>
             </div>
 
             {/* Interactive Chart */}
-            <div className="p-4 rounded-2xl glass-card border border-white/10 bg-slate-950/60 h-72">
+            <div className="p-4 rounded-2xl border border-slate-200 bg-white h-72">
               <Line data={chartConfig} options={chartOptions} />
             </div>
 
@@ -277,13 +277,13 @@ export const BacktestSandbox: React.FC<BacktestSandboxProps> = ({ isOpen, onClos
         ) : null}
 
         {/* Footer */}
-        <div className="pt-4 mt-6 border-t border-white/10 flex items-center justify-between">
-          <p className="text-[10px] text-slate-500">
+        <div className="pt-4 mt-6 border-t border-slate-100 flex items-center justify-between">
+          <p className="text-[10px] text-slate-400">
             Backtest calculations factor entry/exit slippage and historical dividend adjustments.
           </p>
           <button
             onClick={onClose}
-            className="px-4 py-2 text-xs font-semibold rounded-xl bg-slate-800 text-white hover:bg-slate-700 transition cursor-pointer"
+            className="px-4 py-2 text-xs font-bold rounded-xl bg-slate-100 text-slate-800 hover:bg-slate-200 transition cursor-pointer"
           >
             Close
           </button>
