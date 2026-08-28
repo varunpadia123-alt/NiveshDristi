@@ -599,7 +599,7 @@ The authors assume no liability for losses incurred using this platform.
 
 - **Author**: Varun Padia
 - **GitHub**: [@varunpadia2005](https://github.com/varunpadia2005)
-- **Email**: [varunpadia2005@gmail.com](mailto:varunpadia2005@gmail.com)
+- **Email**: [varunpadia1@gmail.com](mailto:varunpadia1@gmail.com)
 - **Issues**: [GitHub Issues](https://github.com/varunpadia2005/NiveshDristi/issues)
 
 ---
