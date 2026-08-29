@@ -23,12 +23,10 @@ import { triggerBrokerSync, updateRiskProfile } from "@/lib/api";
 export type NavTab = 
   | "portfolio" 
   | "screener" 
+  | "products_tools"
+  | "intelligence" 
   | "advisor"
   | "indices"
-  | "ipos" 
-  | "bonds" 
-  | "etfs" 
-  | "intelligence" 
   | "backtest";
 
 interface NavbarProps {
@@ -81,12 +79,10 @@ export const Navbar: React.FC<NavbarProps> = ({
   const navItems: { id: NavTab; label: string; icon: React.ReactNode; badge?: string }[] = [
     { id: "portfolio", label: "Dashboard", icon: <PieChart className="w-4 h-4" /> },
     { id: "screener", label: "Stock Screener", icon: <Search className="w-4 h-4" /> },
+    { id: "products_tools", label: "Products & Tools", icon: <Layers className="w-4 h-4 text-indigo-600" />, badge: "6 Hubs" },
+    { id: "intelligence", label: "Pro Analytics", icon: <BrainCircuit className="w-4 h-4 text-amber-500" />, badge: "4 Tools" },
     { id: "advisor", label: "AI Advisor", icon: <Sparkles className="w-4 h-4 text-emerald-500" />, badge: "Chat" },
     { id: "indices", label: "Indices", icon: <Activity className="w-4 h-4" />, badge: "Live" },
-    { id: "ipos", label: "IPOs", icon: <Rocket className="w-4 h-4" />, badge: "GMP" },
-    { id: "bonds", label: "Bonds & SGB", icon: <Landmark className="w-4 h-4" /> },
-    { id: "etfs", label: "ETFs", icon: <Layers className="w-4 h-4" /> },
-    { id: "intelligence", label: "Pro Analytics", icon: <BrainCircuit className="w-4 h-4 text-amber-500" />, badge: "5 Tools" },
     { id: "backtest", label: "Backtest", icon: <BarChart3 className="w-4 h-4" /> },
   ];
 

@@ -1,6 +1,7 @@
 from fastapi import APIRouter
 from typing import List
-from app.schemas import IpoItem, BondItem, EtfItem
+from app.schemas import IpoItem, BondItem, EtfItem, MtfStockItem, CorporateEventItem
+from app.engine.market_data import get_latest_price, get_stock_metadata, get_live_stock_quote, INDIAN_STOCKS_UNIVERSE
 
 router = APIRouter(prefix="/discovery", tags=["Discovery Hub"])
 
@@ -310,5 +311,181 @@ def get_etfs():
             three_year_cagr_pct=29.60,
             expense_ratio_pct=0.20,
             aum_cr=2400.0
+        )
+    ]
+
+@router.get("/mtf-stocks", response_model=List[MtfStockItem])
+def get_mtf_stocks():
+    """
+    SEBI Approved Margin Trading Facility (MTF) Stocks with up to 4x/5x leverage,
+    live market prices, margin requirements, daily interest rates, and collateral rules.
+    """
+    mtf_tickers = [
+        ("RELIANCE.NS", 20.0, 5.0, 0.035, 12.5),
+        ("TCS.NS", 20.0, 5.0, 0.035, 12.5),
+        ("HDFCBANK.NS", 20.0, 5.0, 0.035, 12.5),
+        ("INFY.NS", 20.0, 5.0, 0.035, 12.5),
+        ("ICICIBANK.NS", 20.0, 5.0, 0.035, 12.5),
+        ("SBIN.NS", 20.0, 5.0, 0.035, 12.5),
+        ("TATAMOTORS.NS", 25.0, 4.0, 0.038, 13.8),
+        ("M&M.NS", 25.0, 4.0, 0.038, 13.8),
+        ("LT.NS", 20.0, 5.0, 0.035, 12.5),
+        ("BHARTIARTL.NS", 20.0, 5.0, 0.035, 12.5),
+        ("BAJFINANCE.NS", 25.0, 4.0, 0.038, 13.8),
+        ("SUNPHARMA.NS", 20.0, 5.0, 0.035, 12.5),
+        ("ITC.NS", 20.0, 5.0, 0.035, 12.5),
+        ("TITAN.NS", 25.0, 4.0, 0.038, 13.8),
+        ("TRENT.NS", 30.0, 3.33, 0.040, 14.5),
+        ("ZOMATO.NS", 30.0, 3.33, 0.040, 14.5),
+        ("BEL.NS", 25.0, 4.0, 0.038, 13.8),
+        ("HAL.NS", 25.0, 4.0, 0.038, 13.8),
+        ("TATASTEEL.NS", 25.0, 4.0, 0.038, 13.8),
+        ("NTPC.NS", 20.0, 5.0, 0.035, 12.5),
+        ("POWERGRID.NS", 20.0, 5.0, 0.035, 12.5),
+        ("DLF.NS", 30.0, 3.33, 0.040, 14.5),
+        ("COALINDIA.NS", 25.0, 4.0, 0.038, 13.8),
+        ("HINDALCO.NS", 25.0, 4.0, 0.038, 13.8)
+    ]
+
+    items = []
+    for ticker, margin_pct, leverage, daily_rate, annual_rate in mtf_tickers:
+        meta = get_stock_metadata(ticker)
+        quote = get_live_stock_quote(meta)
+        items.append(MtfStockItem(
+            ticker=ticker,
+            name=meta["name"],
+            sector=meta["sector"],
+            current_price=quote["current_price"],
+            day_change_pct=quote["day_change_pct"],
+            margin_required_pct=margin_pct,
+            leverage_multiplier=leverage,
+            funding_rate_daily_pct=daily_rate,
+            funding_rate_annual_pct=annual_rate,
+            holding_period_days=365,
+            pledge_collateral_eligible=True,
+            max_position_size_cr=10.0 if leverage >= 4.0 else 5.0
+        ))
+    return items
+
+@router.get("/events-calendar", response_model=List[CorporateEventItem])
+def get_events_calendar():
+    """Corporate Events Calendar: Dividends, Board Meetings, Earnings Results, Bonus & Splits."""
+    return [
+        CorporateEventItem(
+            ticker="RELIANCE.NS",
+            company_name="Reliance Industries Ltd",
+            event_type="DIVIDEND",
+            event_date="08 Sep 2026",
+            description="Final Dividend of ₹10.00 per share (Ex-Date: 08 Sep 2026)",
+            impact="HIGH",
+            action_item="Record date is 09 Sep 2026. Eligible shareholders will receive direct credit."
+        ),
+        CorporateEventItem(
+            ticker="TCS.NS",
+            company_name="Tata Consultancy Services Ltd",
+            event_type="EARNINGS",
+            event_date="10 Oct 2026",
+            description="Q2 FY25 Financial Results & Board Meeting Consideration",
+            impact="HIGH",
+            action_item="Conference call scheduled at 19:00 IST on earnings release date."
+        ),
+        CorporateEventItem(
+            ticker="HDFCBANK.NS",
+            company_name="HDFC Bank Ltd",
+            event_type="BOARD_MEETING",
+            event_date="18 Oct 2026",
+            description="Approval of Audited Financial Results for Quarter Ending 30 Sep 2026",
+            impact="MEDIUM",
+            action_item="Trading window closed for insiders until 48 hours post results."
+        ),
+        CorporateEventItem(
+            ticker="INFY.NS",
+            company_name="Infosys Ltd",
+            event_type="DIVIDEND",
+            event_date="24 Oct 2026",
+            description="Interim Dividend of ₹18.00 per share announced with Q2 results",
+            impact="HIGH",
+            action_item="Ex-dividend date for interim payout."
+        ),
+        CorporateEventItem(
+            ticker="TATAMOTORS.NS",
+            company_name="Tata Motors Ltd",
+            event_type="SPLIT",
+            event_date="15 Nov 2026",
+            description="Demerger into Commercial Vehicles & Passenger Vehicles separate entities",
+            impact="HIGH",
+            action_item="Shareholders on record date will receive 1:1 shares in both listed entities."
+        ),
+        CorporateEventItem(
+            ticker="BHARTIARTL.NS",
+            company_name="Bharti Airtel Ltd",
+            event_type="EARNINGS",
+            event_date="04 Nov 2026",
+            description="Q2 FY25 Earnings & ARPU Update Announcement",
+            impact="MEDIUM",
+            action_item="Analyst briefing on 5G monetisation and tariff revisions."
+        ),
+        CorporateEventItem(
+            ticker="ITC.NS",
+            company_name="ITC Ltd",
+            event_type="SPLIT",
+            event_date="28 Nov 2026",
+            description="Demerger and Separate Listing of ITC Hotels Ltd",
+            impact="HIGH",
+            action_item="Entitlement ratio: 1 share of ITC Hotels for every 10 shares held in ITC."
+        ),
+        CorporateEventItem(
+            ticker="SUNPHARMA.NS",
+            company_name="Sun Pharmaceutical Industries Ltd",
+            event_type="BOARD_MEETING",
+            event_date="01 Nov 2026",
+            description="Approval of Global Specialty Pipeline Development & Q2 Financials",
+            impact="MEDIUM",
+            action_item="Regulatory filing post board meeting completion."
+        ),
+        CorporateEventItem(
+            ticker="SBIN.NS",
+            company_name="State Bank of India",
+            event_type="EARNINGS",
+            event_date="08 Nov 2026",
+            description="Q2 FY25 Financial Results & Credit Growth Conference",
+            impact="HIGH",
+            action_item="NIM projections and asset quality review to be declared."
+        ),
+        CorporateEventItem(
+            ticker="LT.NS",
+            company_name="Larsen & Toubro Ltd",
+            event_type="DIVIDEND",
+            event_date="12 Nov 2026",
+            description="Special Infrastructure Dividend of Rs 22.00 per share",
+            impact="HIGH",
+            action_item="Ex-date for special dividend entitlement."
+        ),
+        CorporateEventItem(
+            ticker="M&M.NS",
+            company_name="Mahindra & Mahindra Ltd",
+            event_type="EARNINGS",
+            event_date="14 Nov 2026",
+            description="SUV Volume Sales Review & Q2 Consolidated Results",
+            impact="MEDIUM",
+            action_item="EV order backlog status presentation to institutional investors."
+        ),
+        CorporateEventItem(
+            ticker="TITAN.NS",
+            company_name="Titan Company Ltd",
+            event_type="BOARD_MEETING",
+            event_date="20 Nov 2026",
+            description="Festive Season Jewelry Demand Review & Expansion Approval",
+            impact="MEDIUM",
+            action_item="Retail store count roadmap for 2027."
+        ),
+        CorporateEventItem(
+            ticker="BAJFINANCE.NS",
+            company_name="Bajaj Finance Ltd",
+            event_type="DIVIDEND",
+            event_date="05 Dec 2026",
+            description="Interim Dividend Announcement of Rs 15.00 per share",
+            impact="MEDIUM",
+            action_item="Record date scheduled for 12 Dec 2026."
         )
     ]

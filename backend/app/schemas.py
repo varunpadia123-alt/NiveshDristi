@@ -266,6 +266,29 @@ class EtfItem(BaseModel):
     expense_ratio_pct: float
     aum_cr: float
 
+class MtfStockItem(BaseModel):
+    ticker: str
+    name: str
+    sector: str
+    current_price: float
+    day_change_pct: float
+    margin_required_pct: float
+    leverage_multiplier: float
+    funding_rate_daily_pct: float
+    funding_rate_annual_pct: float
+    holding_period_days: int
+    pledge_collateral_eligible: bool
+    max_position_size_cr: float
+
+class CorporateEventItem(BaseModel):
+    ticker: str
+    company_name: str
+    event_type: str
+    event_date: str
+    description: str
+    impact: str
+    action_item: Optional[str] = None
+
 # Pro Intelligence Features
 class StressTestHoldingResult(BaseModel):
     ticker: str
@@ -474,4 +497,186 @@ class AiStockAnalystReport(BaseModel):
     actionable_strategy: str
     entry_range: str
     target_exit_strategy: str
+
+# -------------------------------------------------------------
+# Groww-Style 5-Tab Deep Stock Detail Schemas
+# -------------------------------------------------------------
+class MarketDepthOrder(BaseModel):
+    price: float
+    quantity: int
+    orders: int
+
+class MarketDepthSnapshot(BaseModel):
+    buy_depth: List[MarketDepthOrder]
+    sell_depth: List[MarketDepthOrder]
+    total_buy_qty: int
+    total_sell_qty: int
+
+class CompanyProfile(BaseModel):
+    about: str
+    ceo: str
+    founded_year: int
+    headquarters: str
+    isin: str
+    industry: str
+    website: str
+
+class StockOverviewData(BaseModel):
+    current_price: float
+    change_pts: float
+    day_change_pct: float
+    open: float
+    prev_close: float
+    day_high: float
+    day_low: float
+    fifty_two_week_high: float
+    fifty_two_week_low: float
+    volume: int
+    turnover_cr: float
+    upper_circuit: float
+    lower_circuit: float
+    avg_traded_price: float
+    market_depth: MarketDepthSnapshot
+    profile: CompanyProfile
+
+class FinancialPeriodItem(BaseModel):
+    period: str
+    revenue_cr: float
+    net_profit_cr: float
+    opm_pct: float
+    eps: float
+
+class ShareholdingPattern(BaseModel):
+    promoters_pct: float
+    fii_pct: float
+    dii_pct: float
+    retail_public_pct: float
+    pledged_promoter_pct: float
+
+class StockFundamentalData(BaseModel):
+    market_cap_cr: float
+    cap_type: str
+    pe_ratio: float
+    industry_pe: float
+    pb_ratio: float
+    debt_to_equity: float
+    roe_pct: float
+    roce_pct: float
+    eps_ttm: float
+    dividend_yield_pct: float
+    book_value: float
+    face_value: float
+    beta: float
+    quarterly_financials: List[FinancialPeriodItem]
+    annual_financials: List[FinancialPeriodItem]
+    shareholding: ShareholdingPattern
+
+class MovingAverageItem(BaseModel):
+    period: str
+    type: str # "SMA" | "EMA"
+    value: float
+    price_action: str # "ABOVE" | "BELOW"
+    signal: str # "BULLISH" | "BEARISH" | "NEUTRAL"
+
+class OscillatorItem(BaseModel):
+    name: str
+    value: float
+    signal: str
+    action: str
+
+class PivotLevelSet(BaseModel):
+    pivot: float
+    s1: float
+    s2: float
+    s3: float
+    r1: float
+    r2: float
+    r3: float
+
+class StockTechnicalData(BaseModel):
+    summary_verdict: str
+    bullish_count: int
+    neutral_count: int
+    bearish_count: int
+    rsi_14: float
+    rsi_status: str
+    macd_line: float
+    macd_signal: float
+    macd_hist: float
+    macd_bias: str
+    stochastic_k: float
+    adx_14: float
+    bollinger_upper: float
+    bollinger_middle: float
+    bollinger_lower: float
+    moving_averages: List[MovingAverageItem]
+    oscillators: List[OscillatorItem]
+    classic_pivots: PivotLevelSet
+    fibonacci_pivots: PivotLevelSet
+
+class DividendEvent(BaseModel):
+    announcement_date: str
+    ex_date: str
+    record_date: str
+    dividend_amount: float
+    dividend_type: str
+    yield_pct: float
+
+class BonusSplitEvent(BaseModel):
+    event_type: str # "Bonus" | "Stock Split"
+    ratio: str
+    ex_date: str
+    record_date: str
+
+class BoardMeetingEvent(BaseModel):
+    meeting_date: str
+    purpose: str
+    status: str
+
+class StockEventsData(BaseModel):
+    dividends: List[DividendEvent]
+    bonus_splits: List[BonusSplitEvent]
+    board_meetings: List[BoardMeetingEvent]
+
+class StockNewsArticle(BaseModel):
+    title: str
+    source: str
+    published_at: str
+    summary: str
+    sentiment: str # "BULLISH" | "BEARISH" | "NEUTRAL"
+    sentiment_score: float
+    url: Optional[str] = None
+
+class StockNewsData(BaseModel):
+    finbert_sentiment_score: float
+    sentiment_label: str
+    headline: str
+    value_trap_risk: bool
+    news_summary: str
+    articles: List[StockNewsArticle]
+
+class GrowwStockDetailResponse(BaseModel):
+    ticker: str
+    name: str
+    exchange: str
+    bse_code: Optional[str] = None
+    sector: str
+    cap_type: str
+    is_market_open: bool
+    overview: StockOverviewData
+    fundamental: StockFundamentalData
+    technical: StockTechnicalData
+    events: StockEventsData
+    news: StockNewsData
+
+# -------------------------------------------------------------
+# Screener Enhanced Response
+# -------------------------------------------------------------
+class ScreenerResponse(BaseModel):
+    total_stocks: int
+    selected_sector: Optional[str] = None
+    sort_by: str
+    is_market_open: bool
+    available_sectors: List[str]
+    stocks: List[StockScreenerItem]
 

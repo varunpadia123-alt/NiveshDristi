@@ -77,8 +77,8 @@ def test_full_suite():
     r = client.get("/api/markets/sectors")
     assert r.status_code == 200, f"Sectors failed: {r.text}"
     sectors = r.json()
-    assert len(sectors) == 12
-    print(f"✔ 9. Testing Day's Sector Movements ({len(sectors)} NSE sectors)")
+    assert len(sectors) >= 12
+    print(f"✔ 9. Testing Day's Sector Movements ({len(sectors)} NSE & BSE sectors)")
 
     # 10. Indian Indices (Groww-Style)
     r = client.get("/api/indices/indian")
@@ -94,12 +94,16 @@ def test_full_suite():
     assert len(glob_indices) >= 10
     print(f"✔ 11. Testing Global Indices Hub ({len(glob_indices)} Global indices: S&P 500, Nasdaq, Nikkei, FTSE, DAX, etc.)")
 
-    # 12. Discovery Hub (IPOs, Bonds, ETFs)
+    # 12. Discovery Hub (IPOs, Bonds, ETFs, MTF, Events)
     r_ipo = client.get("/api/discovery/ipos")
     r_bonds = client.get("/api/discovery/bonds")
     r_etfs = client.get("/api/discovery/etfs")
+    r_mtf = client.get("/api/discovery/mtf-stocks")
+    r_events = client.get("/api/discovery/events-calendar")
     assert r_ipo.status_code == 200 and r_bonds.status_code == 200 and r_etfs.status_code == 200
-    print(f"✔ 12. Testing Discovery Hub (IPOs with GMP, Bonds & SGBs, ETFs)")
+    assert r_mtf.status_code == 200 and len(r_mtf.json()) > 0
+    assert r_events.status_code == 200 and len(r_events.json()) > 0
+    print(f"✔ 12. Testing Discovery Hub (IPOs with GMP, Bonds & SGBs, ETFs, {len(r_mtf.json())} MTF Stocks, Events Calendar)")
 
     # 13. Stress Testing
     r = client.post("/api/intelligence/stress-test?scenario_type=nifty_drop_20")
@@ -130,6 +134,26 @@ def test_full_suite():
     options = r.json()
     assert len(options) > 0
     print(f"✔ 17. Testing Options Screener (RSI-based Call/Put setups)")
+
+    # 18. Enhanced Market Screener (Sector & Gain-to-Loss sorting)
+    r = client.get("/api/markets/screener?sector=IT%20Services&sort_by=gain_to_loss")
+    assert r.status_code == 200, f"Screener failed: {r.text}"
+    sc_data = r.json()
+    assert "stocks" in sc_data and len(sc_data["stocks"]) > 0
+    assert sc_data["selected_sector"] == "IT Services"
+    print(f"✔ 18. Testing Enhanced Screener ({len(sc_data['stocks'])} stocks in IT Services sorted by Gain-to-Loss)")
+
+    # 19. Groww 5-Tab Deep Stock Detail
+    r = client.get(f"/api/markets/detail/{ticker}")
+    assert r.status_code == 200, f"Groww detail failed: {r.text}"
+    dt = r.json()
+    assert "overview" in dt and "fundamental" in dt and "technical" in dt and "events" in dt and "news" in dt
+    assert "market_depth" in dt["overview"]
+    assert "quarterly_financials" in dt["fundamental"]
+    assert "moving_averages" in dt["technical"]
+    assert "dividends" in dt["events"]
+    assert "articles" in dt["news"]
+    print(f"✔ 19. Testing Groww 5-Tab Deep Stock Detail for {ticker} (Overview, Fundamental, Technical, Events, News)")
 
     print("================ ALL BACKEND TESTS PASSED WITH 100% SUCCESS! ================")
 

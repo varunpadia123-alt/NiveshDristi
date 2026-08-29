@@ -17,14 +17,11 @@ import { BacktestSandbox } from "@/components/BacktestSandbox";
 import { AddHoldingModal } from "@/components/AddHoldingModal";
 import { MarketScreener } from "@/components/MarketScreener";
 import { IndicesSection } from "@/components/IndicesSection";
-import { IpoSection } from "@/components/IpoSection";
-import { BondsSection } from "@/components/BondsSection";
-import { EtfsSection } from "@/components/EtfsSection";
+import { ProductsAndToolsSection } from "@/components/ProductsAndToolsSection";
 import { StressTestingView } from "@/components/StressTestingView";
 import { RebalancingAlertsView } from "@/components/RebalancingAlertsView";
 import { TaxLossHarvestingView } from "@/components/TaxLossHarvestingView";
 import { CorrelationMatrixView } from "@/components/CorrelationMatrixView";
-import { OptionsScreenerView } from "@/components/OptionsScreenerView";
 import { StockDetailModal } from "@/components/StockDetailModal";
 import { AiStockAnalystModal } from "@/components/AiStockAnalystModal";
 import { AiChatAdvisor } from "@/components/AiChatAdvisor";
@@ -44,7 +41,7 @@ import {
 
 export default function DashboardPage() {
   const [activeTab, setActiveTab] = useState<NavTab>("portfolio");
-  const [proSubTab, setProSubTab] = useState<"stress" | "rebalance" | "tax" | "correlation" | "options">("stress");
+  const [proSubTab, setProSubTab] = useState<"stress" | "rebalance" | "tax" | "correlation">("stress");
 
   const [summary, setSummary] = useState<PortfolioSummary | null>(null);
   const [holdings, setHoldings] = useState<Holding[]>([]);
@@ -206,30 +203,24 @@ export default function DashboardPage() {
           />
         )}
 
+        {/* 3. PRODUCTS & TOOLS HUB TAB */}
+        {activeTab === "products_tools" && (
+          <ProductsAndToolsSection
+            onOpenStockDetail={(t) => setSelectedTickerForDetail(t)}
+            onOpenTechnicalDrawer={(t) => setSelectedTickerForDrawer(t)}
+            onOpenAddModalWithTicker={(t, n, s, p) => {
+              setSelectedTickerForDrawer(null);
+              setIsAddModalOpen(true);
+            }}
+          />
+        )}
+
         {/* 4. INDICES HUB TAB (Indian & Global) */}
         {activeTab === "indices" && (
           <IndicesSection />
         )}
 
-        {/* 5. IPOs HUB TAB */}
-        {activeTab === "ipos" && (
-          <IpoSection />
-        )}
-
-        {/* 6. BONDS & SGB HUB TAB */}
-        {activeTab === "bonds" && (
-          <BondsSection />
-        )}
-
-        {/* 7. ETFs CATALOG TAB */}
-        {activeTab === "etfs" && (
-          <EtfsSection
-            onOpenTechnicalDrawer={(t) => setSelectedTickerForDrawer(t)}
-            onOpenStockDetail={(t) => setSelectedTickerForDetail(t)}
-          />
-        )}
-
-        {/* 8. PRO ANALYTICS TAB */}
+        {/* 5. PRO ANALYTICS TAB (Risk, Stress, Rebalance, Tax, Correlation) */}
         {activeTab === "intelligence" && (
           <div className="space-y-6">
             
@@ -240,7 +231,6 @@ export default function DashboardPage() {
                 { id: "rebalance", label: "Rebalancing Alerts", icon: <Scale className="w-4 h-4" />, desc: "Allocation Drift" },
                 { id: "tax", label: "Tax-Loss Harvesting", icon: <ReceiptText className="w-4 h-4" />, desc: "Offset Gains" },
                 { id: "correlation", label: "Correlation Matrix", icon: <Network className="w-4 h-4" />, desc: "Holding Co-Movement" },
-                { id: "options", label: "Options Screener", icon: <Zap className="w-4 h-4" />, desc: "RSI Call/Put Signals" },
               ].map((sub) => {
                 const isCurrent = proSubTab === sub.id;
                 return (
@@ -265,7 +255,6 @@ export default function DashboardPage() {
             {proSubTab === "rebalance" && <RebalancingAlertsView />}
             {proSubTab === "tax" && <TaxLossHarvestingView />}
             {proSubTab === "correlation" && <CorrelationMatrixView />}
-            {proSubTab === "options" && <OptionsScreenerView />}
 
           </div>
         )}

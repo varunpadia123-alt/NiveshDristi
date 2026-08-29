@@ -278,6 +278,31 @@ export interface EtfItem {
 
 export type ETFItem = EtfItem;
 
+export interface MtfStockItem {
+  ticker: string;
+  name: string;
+  sector: string;
+  current_price: number;
+  day_change_pct: number;
+  margin_required_pct: number;
+  leverage_multiplier: number;
+  funding_rate_daily_pct: number;
+  funding_rate_annual_pct: number;
+  holding_period_days: number;
+  pledge_collateral_eligible: boolean;
+  max_position_size_cr: number;
+}
+
+export interface CorporateEventItem {
+  ticker: string;
+  company_name: string;
+  event_type: "DIVIDEND" | "EARNINGS" | "BOARD_MEETING" | "BONUS" | "SPLIT" | string;
+  event_date: string;
+  description: string;
+  impact: "HIGH" | "MEDIUM" | "LOW" | string;
+  action_item?: string;
+}
+
 export interface StressTestHoldingResult {
   ticker: string;
   name: string;
@@ -557,4 +582,202 @@ export interface AiStockAnalystReport {
   actionable_strategy: string;
   entry_range: string;
   target_exit_strategy: string;
+}
+
+// -------------------------------------------------------------
+// Groww-Style 5-Tab Detailed Stock View Types
+// -------------------------------------------------------------
+export interface MarketDepthOrder {
+  price: number;
+  quantity: number;
+  orders: number;
+}
+
+export interface MarketDepthSnapshot {
+  buy_depth: MarketDepthOrder[];
+  sell_depth: MarketDepthOrder[];
+  total_buy_qty: number;
+  total_sell_qty: number;
+}
+
+export interface CompanyProfile {
+  about: string;
+  ceo: string;
+  founded_year: number;
+  headquarters: string;
+  isin: string;
+  industry: string;
+  website: string;
+}
+
+export interface StockOverviewData {
+  current_price: number;
+  change_pts: number;
+  day_change_pct: number;
+  open: number;
+  prev_close: number;
+  day_high: number;
+  day_low: number;
+  fifty_two_week_high: number;
+  fifty_two_week_low: number;
+  volume: number;
+  turnover_cr: number;
+  upper_circuit: number;
+  lower_circuit: number;
+  avg_traded_price: number;
+  market_depth: MarketDepthSnapshot;
+  profile: CompanyProfile;
+}
+
+export interface FinancialPeriodItem {
+  period: string;
+  revenue_cr: number;
+  net_profit_cr: number;
+  opm_pct: number;
+  eps: number;
+}
+
+export interface ShareholdingPattern {
+  promoters_pct: number;
+  fii_pct: number;
+  dii_pct: number;
+  retail_public_pct: number;
+  pledged_promoter_pct: number;
+}
+
+export interface StockFundamentalData {
+  market_cap_cr: number;
+  cap_type: string;
+  pe_ratio: number;
+  industry_pe: number;
+  pb_ratio: number;
+  debt_to_equity: number;
+  roe_pct: number;
+  roce_pct: number;
+  eps_ttm: number;
+  dividend_yield_pct: number;
+  book_value: number;
+  face_value: number;
+  beta: number;
+  quarterly_financials: FinancialPeriodItem[];
+  annual_financials: FinancialPeriodItem[];
+  shareholding: ShareholdingPattern;
+}
+
+export interface MovingAverageItem {
+  period: string;
+  type: string;
+  value: number;
+  price_action: string;
+  signal: "BULLISH" | "BEARISH" | "NEUTRAL" | string;
+}
+
+export interface OscillatorItem {
+  name: string;
+  value: number;
+  signal: string;
+  action: string;
+}
+
+export interface PivotLevelSet {
+  pivot: number;
+  s1: number;
+  s2: number;
+  s3: number;
+  r1: number;
+  r2: number;
+  r3: number;
+}
+
+export interface StockTechnicalData {
+  summary_verdict: string;
+  bullish_count: number;
+  neutral_count: number;
+  bearish_count: number;
+  rsi_14: number;
+  rsi_status: string;
+  macd_line: number;
+  macd_signal: number;
+  macd_hist: number;
+  macd_bias: string;
+  stochastic_k: number;
+  adx_14: number;
+  bollinger_upper: number;
+  bollinger_middle: number;
+  bollinger_lower: number;
+  moving_averages: MovingAverageItem[];
+  oscillators: OscillatorItem[];
+  classic_pivots: PivotLevelSet;
+  fibonacci_pivots: PivotLevelSet;
+}
+
+export interface DividendEvent {
+  announcement_date: string;
+  ex_date: string;
+  record_date: string;
+  dividend_amount: number;
+  dividend_type: string;
+  yield_pct: number;
+}
+
+export interface BonusSplitEvent {
+  event_type: string;
+  ratio: string;
+  ex_date: string;
+  record_date: string;
+}
+
+export interface BoardMeetingEvent {
+  meeting_date: string;
+  purpose: string;
+  status: string;
+}
+
+export interface StockEventsData {
+  dividends: DividendEvent[];
+  bonus_splits: BonusSplitEvent[];
+  board_meetings: BoardMeetingEvent[];
+}
+
+export interface StockNewsArticle {
+  title: string;
+  source: string;
+  published_at: string;
+  summary: string;
+  sentiment: "BULLISH" | "BEARISH" | "NEUTRAL" | string;
+  sentiment_score: number;
+  url?: string;
+}
+
+export interface StockNewsData {
+  finbert_sentiment_score: number;
+  sentiment_label: string;
+  headline: string;
+  value_trap_risk: boolean;
+  news_summary: string;
+  articles: StockNewsArticle[];
+}
+
+export interface GrowwStockDetailResponse {
+  ticker: string;
+  name: string;
+  exchange: string;
+  bse_code?: string;
+  sector: string;
+  cap_type: string;
+  is_market_open: boolean;
+  overview: StockOverviewData;
+  fundamental: StockFundamentalData;
+  technical: StockTechnicalData;
+  events: StockEventsData;
+  news: StockNewsData;
+}
+
+export interface ScreenerResponse {
+  total_stocks: number;
+  selected_sector: string | null;
+  sort_by: string;
+  is_market_open: boolean;
+  available_sectors: string[];
+  stocks: StockScreenerItem[];
 }
