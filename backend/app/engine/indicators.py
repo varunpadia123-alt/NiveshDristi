@@ -1,3 +1,4 @@
+from typing import Optional, Any, cast
 import pandas as pd
 import pandas_ta as ta
 import numpy as np
@@ -5,7 +6,7 @@ from app.engine.market_data import fetch_stock_history
 from app.engine.sentiment import analyze_sentiment
 from app.schemas import TechnicalMetrics
 
-def compute_technical_metrics(ticker: str, df: pd.DataFrame = None) -> TechnicalMetrics:
+def compute_technical_metrics(ticker: str, df: Optional[pd.DataFrame] = None) -> TechnicalMetrics:
     """
     Computes 130+ technical metrics using pandas-ta (RSI, MACD, Moving Averages, Volume, Support/Resistance).
     Calculates a weighted composite score (-5.0 to +5.0) across Momentum, Trend Strength, and Volume/Risk,
@@ -15,31 +16,33 @@ def compute_technical_metrics(ticker: str, df: pd.DataFrame = None) -> Technical
         df = fetch_stock_history(ticker, period="1y")
 
     df_ta = df.copy()
+    close_series = cast(pd.Series, df_ta['Close'])
+    vol_series = cast(pd.Series, df_ta['Volume'].astype(float))
 
     # 1. Momentum Indicators
-    rsi = ta.rsi(df_ta['Close'], length=14)
-    rsi_val = float(rsi.iloc[-1]) if rsi is not None and not rsi.isna().iloc[-1] else 50.0
+    rsi_res: Any = ta.rsi(close_series, length=14)
+    rsi_val = float(rsi_res.iloc[-1]) if rsi_res is not None and not rsi_res.isna().iloc[-1] else 50.0
 
     # 2. MACD (12, 26, 9)
-    macd = ta.macd(df_ta['Close'], fast=12, slow=26, signal=9)
-    if macd is not None and not macd.empty:
-        macd_line = float(macd.iloc[-1, 0])
-        macd_hist = float(macd.iloc[-1, 1])
-        macd_signal = float(macd.iloc[-1, 2])
+    macd_res: Any = ta.macd(close_series, fast=12, slow=26, signal=9)
+    if macd_res is not None and not macd_res.empty:
+        macd_line = float(macd_res.iloc[-1, 0])
+        macd_hist = float(macd_res.iloc[-1, 1])
+        macd_signal = float(macd_res.iloc[-1, 2])
     else:
         macd_line, macd_hist, macd_signal = 0.0, 0.0, 0.0
 
     # 3. Moving Averages (SMA 20, 50, 200, EMA 9, 21)
-    sma_20 = float(ta.sma(df_ta['Close'], length=20).iloc[-1])
-    sma_50 = float(ta.sma(df_ta['Close'], length=50).iloc[-1])
-    sma_200 = float(ta.sma(df_ta['Close'], length=200).iloc[-1])
-    ema_9 = float(ta.ema(df_ta['Close'], length=9).iloc[-1])
-    ema_21 = float(ta.ema(df_ta['Close'], length=21).iloc[-1])
+    sma_20 = float(cast(Any, ta.sma(close_series, length=20)).iloc[-1])
+    sma_50 = float(cast(Any, ta.sma(close_series, length=50)).iloc[-1])
+    sma_200 = float(cast(Any, ta.sma(close_series, length=200)).iloc[-1])
+    ema_9 = float(cast(Any, ta.ema(close_series, length=9)).iloc[-1])
+    ema_21 = float(cast(Any, ta.ema(close_series, length=21)).iloc[-1])
 
     current_price = float(df_ta['Close'].iloc[-1])
 
     # 4. Volume Profile
-    vol_sma_20 = float(ta.sma(df_ta['Volume'].astype(float), length=20).iloc[-1])
+    vol_sma_20 = float(cast(Any, ta.sma(vol_series, length=20)).iloc[-1])
     current_vol = float(df_ta['Volume'].iloc[-1])
     vol_ratio = (current_vol / vol_sma_20) if vol_sma_20 > 0 else 1.0
 

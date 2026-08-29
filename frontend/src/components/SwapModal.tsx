@@ -238,19 +238,19 @@ export const SwapModal: React.FC<SwapModalProps> = ({
 
                 <div className="p-2.5 rounded-xl bg-white border border-slate-200">
                   <div className="text-[10px] text-slate-500">Unrealized Gain</div>
-                  <div className="font-bold text-slate-900">₹{alternative.unrealized_gain.toLocaleString("en-IN")}</div>
+                  <div className="font-bold text-slate-900">₹{(alternative.unrealized_gain || 0).toLocaleString("en-IN")}</div>
                   <div className="text-[10px] text-slate-400">Rate: {alternative.tax_rate_pct}%</div>
                 </div>
 
                 <div className="p-2.5 rounded-xl bg-white border border-slate-200">
                   <div className="text-[10px] text-slate-500">Estimated Tax Drag</div>
-                  <div className="font-bold text-rose-600">₹{alternative.estimated_tax_payable.toLocaleString("en-IN")}</div>
+                  <div className="font-bold text-rose-600">₹{(alternative.estimated_tax_payable || 0).toLocaleString("en-IN")}</div>
                   <div className="text-[10px] text-slate-400">Deducted at exit</div>
                 </div>
 
                 <div className="p-2.5 rounded-xl bg-emerald-50 border border-emerald-200">
                   <div className="text-[10px] text-emerald-800 font-semibold">Net Redeployable</div>
-                  <div className="font-black text-slate-900">₹{alternative.redeployable_capital.toLocaleString("en-IN")}</div>
+                  <div className="font-black text-slate-900">₹{(alternative.redeployable_capital || 0).toLocaleString("en-IN")}</div>
                   <div className="text-[10px] text-emerald-700 font-bold">≈ {alternative.new_shares_acquired} shares</div>
                 </div>
               </div>

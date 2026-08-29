@@ -1,136 +1,137 @@
 import sys
 import os
-import io
 
-# Ensure UTF-8 stdout for Windows consoles
-if hasattr(sys.stdout, "reconfigure"):
-    sys.stdout.reconfigure(encoding="utf-8")
-elif hasattr(sys.stdout, "buffer"):
-    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8")
-
-sys.path.append(os.path.join(os.path.dirname(__file__)))
+# Fix Windows console encoding for Rupee symbol
+if sys.platform == "win32":
+    getattr(sys.stdout, "reconfigure", lambda **kw: None)(encoding="utf-8")
 
 from fastapi.testclient import TestClient
 from app.main import app
 
 client = TestClient(app)
 
-def test_all_endpoints():
-    print("--- 1. Testing Root Endpoint ---")
-    res = client.get("/")
-    assert res.status_code == 200
-    data = res.json()
-    print(f"Project: {data['project']} | Version: {data['version']}")
+def test_full_suite():
+    print("================ RUNNING COMPLETE NIVESHDRISTI BACKEND TEST SUITE ================")
+    
+    # 1. Root & Health
+    r = client.get("/")
+    assert r.status_code == 200, f"Root failed: {r.text}"
+    print("✔ 1. Testing Root Endpoint")
 
-    print("\n--- 2. Testing Portfolio Summary & Concentration Risk ---")
-    res = client.get("/api/portfolio/summary")
-    assert res.status_code == 200
-    data = res.json()
-    print(f"Portfolio Total Value: Rs {data['total_current_value']:,.2f}")
-    print(f"Portfolio Health Score: {data['portfolio_health_score']}/100")
-    print(f"Concentration Alerts: {data['concentration_alerts']}")
+    # 2. Portfolio Summary
+    r = client.get("/api/portfolio/summary")
+    assert r.status_code == 200, f"Summary failed: {r.text}"
+    data = r.json()
+    assert "total_investment" in data
+    assert "total_current_value" in data
+    print("✔ 2. Testing Portfolio Summary & Concentration Risk")
 
-    print("\n--- 3. Testing User Holdings with Badges & Composite Scores ---")
-    res = client.get("/api/portfolio/holdings")
-    assert res.status_code == 200
-    holdings = res.json()
-    print(f"Found {len(holdings)} active holdings.")
-    for h in holdings[:2]:
-        print(f"Holding: {h['ticker']} ({h['symbol_name']}) | Badge: {h['badge']} | Composite Score: {h['composite_score']} | P&L: {h['pnl_percentage']}%")
+    # 3. Holdings
+    r = client.get("/api/portfolio/holdings")
+    assert r.status_code == 200, f"Holdings failed: {r.text}"
+    holdings = r.json()
+    assert len(holdings) > 0, "No holdings found"
+    holding_id = holdings[0]["id"]
+    ticker = holdings[0]["ticker"]
+    print(f"✔ 3. Testing User Holdings with Badges & Composite Scores ({len(holdings)} holdings)")
 
-    print("\n--- 4. Testing Multi-Indicator Technical Engine & FinBERT Sentiment ---")
-    test_ticker = holdings[0]["ticker"] if holdings else "RELIANCE.NS"
-    res = client.get(f"/api/analysis/metrics/{test_ticker}")
-    assert res.status_code == 200
-    metrics = res.json()
-    print(f"Ticker: {metrics['ticker']} | Price: Rs {metrics['current_price']}")
-    print(f"Composite Score: {metrics['composite_score']} | Badge: {metrics['badge']}")
-    print(f"Momentum: {metrics['momentum_score']} | Trend: {metrics['trend_score']} | Sentiment: {metrics['sentiment_label']}")
+    # 4. Technical Analysis
+    r = client.get(f"/api/analysis/technical/{ticker}")
+    assert r.status_code == 200, f"Technical failed: {r.text}"
+    tech = r.json()
+    assert "composite_score" in tech
+    assert "rsi_14" in tech
+    print("✔ 4. Testing Multi-Indicator Technical Engine & FinBERT Sentiment")
 
-    print("\n--- 5. Testing AI Swap Engine & RAG Rationales ---")
-    res = client.get("/api/analysis/alternatives")
-    assert res.status_code == 200
-    alts = res.json()
-    print(f"Discovered {len(alts)} alternative recommendations.")
+    # 5. Smart Swap
+    r = client.get(f"/api/analysis/alternative/{holding_id}")
+    assert r.status_code == 200, f"Swap failed: {r.text}"
+    swap_data = r.json()
+    assert "alternative_ticker" in swap_data
+    print(f"✔ 5. Testing AI Swap Engine & RAG Rationales (Alternative: {swap_data['alternative_ticker']})")
 
-    print("\n--- 6. Testing Backtesting Sandbox (3Y) ---")
-    res = client.get("/api/backtest/run?ticker=RELIANCE.NS&timeframe_years=3")
-    assert res.status_code == 200
-    backtest = res.json()
-    print(f"Strategy CAGR: {backtest['cagr_strategy_pct']}% | Sharpe: {backtest['sharpe_ratio']}")
+    # 6. Backtest Sandbox
+    r = client.get(f"/api/backtest/run?ticker={ticker}&timeframe_years=3")
+    assert r.status_code == 200, f"Backtest failed: {r.text}"
+    bt = r.json()
+    assert "cagr_strategy_pct" in bt
+    print("✔ 6. Testing Backtesting Sandbox (3Y)")
 
-    print("\n--- 7. Testing Live Stock Screener & Search ---")
-    res = client.get("/api/markets/search?query=TATA")
-    assert res.status_code == 200
-    search_results = res.json()
-    print(f"Stock search returned {len(search_results)} results for 'TATA'.")
-    if search_results:
-        print(f"Top result: {search_results[0]['ticker']} ({search_results[0]['name']}) - Rs {search_results[0]['current_price']} ({search_results[0]['day_change_pct']}%)")
+    # 7. Stock Screener & Search
+    r = client.get("/api/markets/search?q=TCS")
+    assert r.status_code == 200, f"Search failed: {r.text}"
+    results = r.json()
+    assert len(results) > 0
+    print(f"✔ 7. Testing Live Stock Screener & Search ({len(results)} matches for 'TCS')")
 
-    print("\n--- 8. Testing Top Movers (Large Cap, Mid Cap, Small Cap) ---")
-    res = client.get("/api/markets/top-movers")
-    assert res.status_code == 200
-    movers = res.json()
-    print(f"Large Cap Gainers: {len(movers['large_cap_gainers'])} | Mid Cap: {len(movers['mid_cap_gainers'])} | Small Cap: {len(movers['small_cap_gainers'])}")
-    if movers['large_cap_gainers']:
-        lg = movers['large_cap_gainers'][0]
-        print(f"Top Large Cap Gainer: {lg['ticker']} (+{lg['day_change_pct']}%)")
+    # 8. Top Movers
+    r = client.get("/api/markets/movers")
+    assert r.status_code == 200, f"Movers failed: {r.text}"
+    movers = r.json()
+    assert len(movers["largecap_gainers"]) > 0
+    assert len(movers["midcap_gainers"]) > 0
+    assert len(movers["smallcap_gainers"]) > 0
+    print("✔ 8. Testing Top Movers (Large Cap, Mid Cap, Small Cap)")
 
-    print("\n--- 9. Testing Day's Sector Movements ---")
-    res = client.get("/api/markets/sectors")
-    assert res.status_code == 200
-    sectors = res.json()
-    print(f"Tracked {len(sectors)} Indian sector indices.")
-    for s in sectors[:3]:
-        print(f"Sector: {s['sector_name']} | Day Move: {s['day_change_pct']:+.2f}% | Sentiment: {s['sentiment']} | Top: {s['top_performer']}")
+    # 9. Day's Sector Movements
+    r = client.get("/api/markets/sectors")
+    assert r.status_code == 200, f"Sectors failed: {r.text}"
+    sectors = r.json()
+    assert len(sectors) == 12
+    print(f"✔ 9. Testing Day's Sector Movements ({len(sectors)} NSE sectors)")
 
-    print("\n--- 10. Testing IPOs, Bonds, and ETFs Hub ---")
-    ipos_res = client.get("/api/discovery/ipos")
-    assert ipos_res.status_code == 200
-    bonds_res = client.get("/api/discovery/bonds")
-    assert bonds_res.status_code == 200
-    etfs_res = client.get("/api/discovery/etfs")
-    assert etfs_res.status_code == 200
-    print(f"Found {len(ipos_res.json())} IPOs, {len(bonds_res.json())} Bonds, and {len(etfs_res.json())} ETFs.")
+    # 10. Indian Indices (Groww-Style)
+    r = client.get("/api/indices/indian")
+    assert r.status_code == 200, f"Indian indices failed: {r.text}"
+    ind_indices = r.json()
+    assert len(ind_indices) >= 15
+    print(f"✔ 10. Testing Indian Indices Hub ({len(ind_indices)} Indian indices: Nifty 50, Sensex, Sectorals, Mid/Smallcap)")
 
-    print("\n--- 11. Testing Portfolio Stress Testing ('What if Nifty drops 20%?') ---")
-    res = client.get("/api/intelligence/stress-test?scenario=nifty_drop_20")
-    assert res.status_code == 200
-    stress = res.json()
-    print(f"Scenario: {stress['scenario_name']}")
-    print(f"Portfolio Simulated Value: Rs {stress['simulated_portfolio_value']:,.2f} (Loss: {stress['total_loss_pct']}%)")
-    print(f"Max Drawdown Holding: {stress['max_drawdown_holding']} | Defensive Rec: {stress['defensive_recommendation'][:100]}...")
+    # 11. Global Indices
+    r = client.get("/api/indices/global")
+    assert r.status_code == 200, f"Global indices failed: {r.text}"
+    glob_indices = r.json()
+    assert len(glob_indices) >= 10
+    print(f"✔ 11. Testing Global Indices Hub ({len(glob_indices)} Global indices: S&P 500, Nasdaq, Nikkei, FTSE, DAX, etc.)")
 
-    print("\n--- 12. Testing Rebalancing Alerts & Allocation Drift ---")
-    res = client.get("/api/intelligence/rebalancing")
-    assert res.status_code == 200
-    reb = res.json()
-    print(f"Drift Detected: {reb['is_drift_detected']} | Urgency: {reb['rebalancing_urgency']} | Max Drift: {reb['max_drift_pct']}%")
-    print(f"Suggested Orders: {reb['suggested_orders']}")
+    # 12. Discovery Hub (IPOs, Bonds, ETFs)
+    r_ipo = client.get("/api/discovery/ipos")
+    r_bonds = client.get("/api/discovery/bonds")
+    r_etfs = client.get("/api/discovery/etfs")
+    assert r_ipo.status_code == 200 and r_bonds.status_code == 200 and r_etfs.status_code == 200
+    print(f"✔ 12. Testing Discovery Hub (IPOs with GMP, Bonds & SGBs, ETFs)")
 
-    print("\n--- 13. Testing Tax-Loss Harvesting Engine ---")
-    res = client.get("/api/intelligence/tax-harvesting")
-    assert res.status_code == 200
-    tax_harv = res.json()
-    print(f"Eligible Loss Positions: {tax_harv['eligible_holdings_count']} | Potential Tax Savings: Rs {tax_harv['total_potential_tax_savings_inr']:,.2f}")
+    # 13. Stress Testing
+    r = client.post("/api/intelligence/stress-test?scenario_type=nifty_drop_20")
+    assert r.status_code == 200, f"Stress test failed: {r.text}"
+    st = r.json()
+    assert "projected_portfolio_loss" in st
+    print("✔ 13. Testing Portfolio Stress Testing ('What if Nifty drops 20%?')")
 
-    print("\n--- 14. Testing Correlation Matrix ---")
-    res = client.get("/api/intelligence/correlation-matrix")
-    assert res.status_code == 200
-    corr = res.json()
-    print(f"Correlation Matrix Size: {len(corr['matrix'])}x{len(corr['matrix'][0])} | Diversification Score: {corr['diversification_score']}/100")
-    print(f"High Correlation Pairs: {corr['high_correlation_pairs']}")
+    # 14. Rebalancing Alerts
+    r = client.get("/api/intelligence/rebalance-alerts")
+    assert r.status_code == 200, f"Rebalancing alerts failed: {r.text}"
+    print("✔ 14. Testing Rebalancing Alerts & Allocation Drift")
 
-    print("\n--- 15. Testing Options Screener (RSI-based Call/Put) ---")
-    res = client.get("/api/intelligence/options-screener")
-    assert res.status_code == 200
-    opt = res.json()
-    print(f"Screened {opt['total_screened']} F&O contracts. Found {len(opt['call_opportunities'])} CALL setups and {len(opt['put_opportunities'])} PUT setups.")
-    if opt['call_opportunities']:
-        c = opt['call_opportunities'][0]
-        print(f"Call Signal: {c['ticker']} Strike {c['strike_price']} | RSI: {c['rsi_14']} | Target: Rs {c['target_premium']} (SL: Rs {c['stop_loss_premium']})")
+    # 15. Tax-Loss Harvesting
+    r = client.get("/api/intelligence/tax-loss-harvesting")
+    assert r.status_code == 200, f"Tax loss failed: {r.text}"
+    print("✔ 15. Testing Tax-Loss Harvesting Engine")
 
-    print("\n================ ALL NIVESHDRISTI BACKEND TESTS PASSED WITH 100% SUCCESS! ================")
+    # 16. Correlation Matrix
+    r = client.get("/api/intelligence/correlation-matrix")
+    assert r.status_code == 200, f"Correlation failed: {r.text}"
+    assert "matrix" in r.json()
+    print("✔ 16. Testing Correlation Matrix")
+
+    # 17. Options Screener
+    r = client.get("/api/intelligence/options-screener")
+    assert r.status_code == 200, f"Options screener failed: {r.text}"
+    options = r.json()
+    assert len(options) > 0
+    print(f"✔ 17. Testing Options Screener (RSI-based Call/Put setups)")
+
+    print("================ ALL BACKEND TESTS PASSED WITH 100% SUCCESS! ================")
 
 if __name__ == "__main__":
-    test_all_endpoints()
+    test_full_suite()

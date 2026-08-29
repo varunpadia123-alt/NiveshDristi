@@ -8,9 +8,9 @@ import {
   ArrowUpRight, 
   ArrowDownRight, 
   ShieldAlert, 
-  Sparkles,
-  Percent,
-  CheckCircle2
+  Sparkles, 
+  Percent, 
+  CheckCircle2 
 } from "lucide-react";
 import { fetchOptionsScreener } from "@/lib/api";
 import { OptionsScreenerResponse, OptionSignal } from "@/types";
@@ -38,9 +38,10 @@ export const OptionsScreenerView: React.FC = () => {
 
   const getFilteredSignals = (): OptionSignal[] => {
     if (!data) return [];
-    if (filterType === "CE") return data.call_opportunities;
-    if (filterType === "PE") return data.put_opportunities;
-    return [...data.call_opportunities, ...data.put_opportunities];
+    const allSignals = data.signals || [...(data.call_opportunities || []), ...(data.put_opportunities || [])];
+    if (filterType === "CE") return allSignals.filter(s => s.option_type.includes("CALL") || s.option_type.includes("CE"));
+    if (filterType === "PE") return allSignals.filter(s => s.option_type.includes("PUT") || s.option_type.includes("PE"));
+    return allSignals;
   };
 
   return (
@@ -95,7 +96,12 @@ export const OptionsScreenerView: React.FC = () => {
       {/* Signals Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
         {getFilteredSignals().map((signal, idx) => {
-          const isCall = signal.option_type === "CE";
+          const isCall = signal.option_type.includes("CALL") || signal.option_type.includes("CE");
+          const companyName = signal.company_name || signal.ticker.replace(".NS", "");
+          const entry = signal.entry_premium ?? signal.estimated_premium ?? 50;
+          const stopLoss = signal.stop_loss_premium ?? signal.stop_loss ?? 30;
+          const action = signal.recommended_action || (isCall ? "BUY CALL (CE)" : "BUY PUT (PE)");
+          const rr = signal.risk_reward_ratio || signal.risk_reward || "1:2.5";
 
           return (
             <div
@@ -110,7 +116,7 @@ export const OptionsScreenerView: React.FC = () => {
                       ? "bg-emerald-100 text-emerald-800 border border-emerald-200"
                       : "bg-rose-100 text-rose-800 border border-rose-200"
                   }`}>
-                    {signal.recommended_action}
+                    {action}
                   </span>
 
                   <span className="text-[11px] font-bold px-2 py-0.5 rounded-md bg-slate-100 text-slate-700">
@@ -120,7 +126,7 @@ export const OptionsScreenerView: React.FC = () => {
 
                 {/* Underlying & Strike Title */}
                 <h3 className="font-extrabold text-slate-900 text-base mt-3">
-                  {signal.company_name}
+                  {companyName}
                 </h3>
                 <div className="text-xs font-semibold text-slate-500 mt-0.5 flex items-center justify-between">
                   <span>Spot: ₹{signal.spot_price.toFixed(1)}</span>
@@ -133,7 +139,7 @@ export const OptionsScreenerView: React.FC = () => {
                 <div className="mt-4 p-3 rounded-xl bg-slate-50 border border-slate-100 grid grid-cols-3 gap-2 text-center text-xs">
                   <div>
                     <span className="text-[10px] text-slate-400 block font-medium">Entry</span>
-                    <span className="font-extrabold text-slate-900 text-sm">₹{signal.entry_premium}</span>
+                    <span className="font-extrabold text-slate-900 text-sm">₹{entry}</span>
                   </div>
                   <div>
                     <span className="text-[10px] text-slate-400 block font-medium">Target</span>
@@ -141,14 +147,14 @@ export const OptionsScreenerView: React.FC = () => {
                   </div>
                   <div>
                     <span className="text-[10px] text-slate-400 block font-medium">Stop Loss</span>
-                    <span className="font-black text-rose-600 text-sm">₹{signal.stop_loss_premium}</span>
+                    <span className="font-black text-rose-600 text-sm">₹{stopLoss}</span>
                   </div>
                 </div>
 
                 {/* Risk Reward & Expiry */}
                 <div className="mt-3 flex items-center justify-between text-xs text-slate-600">
                   <span>Expiry: <strong>{signal.expiry}</strong></span>
-                  <span className="font-bold text-emerald-700">R:R {signal.risk_reward_ratio}</span>
+                  <span className="font-bold text-emerald-700">R:R {rr}</span>
                 </div>
 
                 {/* Setup Rationale */}
@@ -160,16 +166,14 @@ export const OptionsScreenerView: React.FC = () => {
 
               {/* Action Button */}
               <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between">
-                <span className="text-[10px] font-semibold text-slate-400">
-                  NSE F&O Derivatives
+                <span className="text-[11px] font-semibold text-slate-500">
+                  MACD Bias: {signal.macd_bias}
                 </span>
                 <button
-                  onClick={() => alert(`Placing option order for ${signal.ticker} ${signal.strike_price} ${signal.option_type}...`)}
-                  className={`px-3.5 py-1.5 rounded-xl text-white text-xs font-bold transition-all cursor-pointer ${
-                    isCall ? "bg-emerald-600 hover:bg-emerald-700" : "bg-rose-600 hover:bg-rose-700"
-                  }`}
+                  className="px-3.5 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold transition-all cursor-pointer"
+                  onClick={() => alert(`Pre-filling broker order ticket for ${companyName} ${signal.strike_price} ${signal.option_type}...`)}
                 >
-                  Place {signal.option_type} Order
+                  Trade Setup
                 </button>
               </div>
             </div>

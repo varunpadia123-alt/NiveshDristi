@@ -7,11 +7,11 @@ import {
   Calendar, 
   CheckCircle2, 
   Clock, 
-  Sparkles,
-  TrendingUp,
-  Tag,
-  Users,
-  ShieldCheck
+  Sparkles, 
+  TrendingUp, 
+  Tag, 
+  Users, 
+  ShieldCheck 
 } from "lucide-react";
 import { fetchIPOs } from "@/lib/api";
 import { IPOItem } from "@/types";
@@ -36,6 +36,10 @@ export const IpoSection: React.FC = () => {
       setLoading(false);
     }
   };
+
+  const filtered = filterStatus === "ALL"
+    ? ipos
+    : ipos.filter(i => i.status.toUpperCase() === filterStatus.toUpperCase());
 
   return (
     <div className="space-y-6">
@@ -62,7 +66,7 @@ export const IpoSection: React.FC = () => {
               { id: "ALL", label: "All IPOs" },
               { id: "OPEN", label: "Open Now" },
               { id: "UPCOMING", label: "Upcoming" },
-              { id: "LISTED", label: "Recently Listed" },
+              { id: "CLOSED", label: "Closed" },
             ].map((tab) => (
               <button
                 key={tab.id}
@@ -82,14 +86,19 @@ export const IpoSection: React.FC = () => {
 
       {/* 2. IPO List Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-        {ipos.map((ipo) => {
+        {filtered.map((ipo) => {
           const isOpen = ipo.status === "OPEN";
-          const isListed = ipo.status === "LISTED";
-          const isUpcoming = ipo.status === "UPCOMING";
+          const isClosed = ipo.status === "CLOSED";
+          const name = ipo.company_name || ipo.name || ipo.symbol;
+          const gmpPts = ipo.gmp_pts ?? ipo.gmp_inr ?? 0;
+          const gmpPct = ipo.gmp_pct ?? ipo.estimated_listing_gain_pct ?? 0;
+          const subRate = ipo.subscription_rate_x ?? ipo.subscription_times ?? 0;
+          const verdict = ipo.ai_verdict || ipo.ai_rating || "SUBSCRIBE";
+          const keyId = ipo.id || ipo.symbol;
 
           return (
             <div
-              key={ipo.id}
+              key={keyId}
               className="light-card light-card-hover rounded-2xl p-5 border border-slate-200 bg-white flex flex-col justify-between"
             >
               <div>
@@ -98,7 +107,7 @@ export const IpoSection: React.FC = () => {
                   <span className={`text-[10px] font-extrabold px-2.5 py-1 rounded-full uppercase tracking-wider ${
                     isOpen
                       ? "bg-emerald-100 text-emerald-800 border border-emerald-200 animate-pulse"
-                      : isListed
+                      : isClosed
                       ? "bg-slate-100 text-slate-700"
                       : "bg-indigo-100 text-indigo-800 border border-indigo-200"
                   }`}>
@@ -106,19 +115,19 @@ export const IpoSection: React.FC = () => {
                   </span>
 
                   <span className={`text-[11px] font-black px-2.5 py-1 rounded-lg ${
-                    ipo.ai_rating === "SUBSCRIBE"
+                    verdict.includes("SUBSCRIBE")
                       ? "bg-emerald-500 text-white"
-                      : ipo.ai_rating === "MAY AVOID"
+                      : verdict.includes("AVOID")
                       ? "bg-rose-500 text-white"
                       : "bg-amber-500 text-white"
                   }`}>
-                    AI: {ipo.ai_rating}
+                    AI: {verdict}
                   </span>
                 </div>
 
                 {/* Company Title */}
                 <h3 className="font-extrabold text-slate-900 text-base mt-3 line-clamp-1">
-                  {ipo.name}
+                  {name}
                 </h3>
                 <div className="text-xs font-semibold text-slate-400 mt-0.5">
                   NSE/BSE Symbol: {ipo.symbol}
@@ -132,13 +141,13 @@ export const IpoSection: React.FC = () => {
                       <span>Grey Market (GMP)</span>
                     </div>
                     <div className="font-extrabold text-slate-900 text-sm">
-                      +₹{ipo.gmp_inr} / share
+                      +₹{gmpPts} / share
                     </div>
                   </div>
                   <div className="text-right">
                     <div className="text-[10px] font-medium text-slate-500">Est. Listing Gain</div>
                     <div className="font-black text-emerald-600 text-sm">
-                      +{ipo.estimated_listing_gain_pct}%
+                      +{gmpPct.toFixed(1)}%
                     </div>
                   </div>
                 </div>
@@ -155,37 +164,31 @@ export const IpoSection: React.FC = () => {
                   </div>
                   <div className="p-2 rounded-lg bg-slate-50">
                     <span className="text-slate-400 text-[10px] block">Lot Size</span>
-                    <span className="font-bold text-slate-800">{ipo.lot_size} Shares (₹{(ipo.max_price * ipo.lot_size).toLocaleString("en-IN")})</span>
+                    <span className="font-bold text-slate-800">{ipo.lot_size} Shares</span>
                   </div>
                   <div className="p-2 rounded-lg bg-slate-50">
                     <span className="text-slate-400 text-[10px] block">Subscription</span>
-                    <span className="font-bold text-indigo-600">{ipo.subscription_times > 0 ? `${ipo.subscription_times}x` : "Awaiting Open"}</span>
+                    <span className="font-bold text-indigo-600">{subRate > 0 ? `${subRate}x` : "Upcoming"}</span>
                   </div>
                 </div>
 
                 {/* Timeline Dates */}
                 <div className="mt-3 flex items-center space-x-2 text-[11px] text-slate-500">
                   <Calendar className="w-3.5 h-3.5 text-slate-400" />
-                  <span>Dates: {ipo.open_date} to {ipo.close_date}</span>
+                  <span>Dates: {ipo.bidding_dates || `${ipo.open_date || 'TBA'} - ${ipo.close_date || 'TBA'}`}</span>
                 </div>
-
-                {/* AI Summary Snippet */}
-                <p className="mt-3 text-[11px] text-slate-600 bg-emerald-50/50 p-2.5 rounded-xl border border-emerald-100/80 leading-relaxed">
-                  <span className="font-bold text-emerald-900">AI Analysis: </span>
-                  {ipo.ai_summary}
-                </p>
               </div>
 
               {/* Action Button */}
               <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between">
                 <span className="text-[11px] font-semibold text-slate-500">
-                  Listing Date: {ipo.listing_date}
+                  Mainboard IPO
                 </span>
                 <button
                   className="px-3.5 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold transition-all cursor-pointer"
-                  onClick={() => alert(`Redirecting to broker bidding portal for ${ipo.name}...`)}
+                  onClick={() => alert(`Redirecting to bidding portal for ${name}...`)}
                 >
-                  {isOpen ? "Apply Now" : "View Prospectus"}
+                  {isOpen ? "Apply Now" : "View Details"}
                 </button>
               </div>
             </div>

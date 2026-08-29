@@ -34,6 +34,23 @@ export const RebalancingAlertsView: React.FC = () => {
     }
   };
 
+  const isDrift = data?.is_drift_detected || (data?.alerts && data.alerts.length > 0);
+  const urgency = data?.rebalancing_urgency || (data?.alerts?.some(a => a.severity === "HIGH") ? "HIGH" : "NORMAL");
+  const maxDrift = data?.max_drift_pct ?? (data?.alerts && data.alerts.length > 0 ? Math.max(...data.alerts.map(a => Math.abs(a.drift_pct))) : 0);
+  const breakdown = data?.allocation_breakdown || (data?.alerts || []).map(a => ({
+    asset_or_sector: a.asset_or_sector,
+    sector: a.asset_or_sector,
+    status: a.drift_pct > 0 ? "OVERWEIGHT" : "UNDERWEIGHT",
+    current_pct: a.actual_weight_pct,
+    target_pct: a.target_weight_pct,
+    drift_pct: a.drift_pct,
+    action: a.drift_pct > 0 ? "SELL" : "BUY",
+    current_value: 100000 * (a.actual_weight_pct / 100),
+    target_value: 100000 * (a.target_weight_pct / 100),
+    amount_inr: a.rebalance_amount
+  }));
+  const orders = data?.suggested_orders || (data?.alerts || []).map(a => a.action_needed);
+
   return (
     <div className="space-y-6">
       
@@ -56,16 +73,16 @@ export const RebalancingAlertsView: React.FC = () => {
           {data && (
             <div className="flex items-center space-x-3">
               <div className={`px-4 py-2.5 rounded-2xl border flex items-center space-x-2 text-xs font-black ${
-                data.is_drift_detected
+                isDrift
                   ? "bg-amber-50 text-amber-900 border-amber-200"
                   : "bg-emerald-50 text-emerald-900 border-emerald-200"
               }`}>
-                {data.is_drift_detected ? (
+                {isDrift ? (
                   <AlertCircle className="w-4 h-4 text-amber-600 animate-pulse" />
                 ) : (
                   <CheckCircle2 className="w-4 h-4 text-emerald-600" />
                 )}
-                <span>Urgency: {data.rebalancing_urgency} (Max Drift: {data.max_drift_pct}%)</span>
+                <span>Urgency: {urgency} (Max Drift: {maxDrift.toFixed(1)}%)</span>
               </div>
             </div>
           )}
@@ -80,15 +97,15 @@ export const RebalancingAlertsView: React.FC = () => {
           </h3>
 
           <div className="space-y-4 mt-5">
-            {data.allocation_breakdown.map((item) => {
-              const isOver = item.status === "OVERWEIGHT";
-              const isUnder = item.status === "UNDERWEIGHT";
+            {breakdown.map((item: any) => {
+              const isOver = item.drift_pct > 0;
+              const isUnder = item.drift_pct < 0;
 
               return (
-                <div key={item.asset_or_sector} className="p-4 rounded-xl bg-slate-50 border border-slate-100 flex flex-col md:flex-row md:items-center justify-between gap-3">
+                <div key={item.asset_or_sector || item.sector} className="p-4 rounded-xl bg-slate-50 border border-slate-100 flex flex-col md:flex-row md:items-center justify-between gap-3">
                   <div className="w-full md:w-1/3">
                     <div className="flex items-center space-x-2">
-                      <span className="font-bold text-slate-900 text-sm">{item.asset_or_sector}</span>
+                      <span className="font-bold text-slate-900 text-sm">{item.asset_or_sector || item.sector}</span>
                       <span className={`text-[10px] font-extrabold px-2 py-0.5 rounded-md ${
                         isOver
                           ? "bg-rose-100 text-rose-800"
@@ -96,11 +113,11 @@ export const RebalancingAlertsView: React.FC = () => {
                           ? "bg-blue-100 text-blue-800"
                           : "bg-emerald-100 text-emerald-800"
                       }`}>
-                        {item.status} ({item.drift_pct > 0 ? `+${item.drift_pct}%` : `${item.drift_pct}%`})
+                        {isOver ? "OVERWEIGHT" : isUnder ? "UNDERWEIGHT" : "BALANCED"} ({item.drift_pct > 0 ? `+${item.drift_pct}%` : `${item.drift_pct}%`})
                       </span>
                     </div>
                     <div className="text-xs text-slate-500 mt-1">
-                      Current Value: ₹{item.current_value.toLocaleString("en-IN")} → Target: ₹{item.target_value.toLocaleString("en-IN")}
+                      Current: {item.current_pct}% → Target: {item.target_pct}%
                     </div>
                   </div>
 
@@ -122,17 +139,11 @@ export const RebalancingAlertsView: React.FC = () => {
 
                   {/* Rebalance Action */}
                   <div className="text-right">
-                    {item.action === "HOLD" ? (
-                      <span className="text-xs font-bold text-emerald-700 bg-emerald-100 px-3 py-1 rounded-lg">
-                        Balanced (No Action)
+                    <div className="inline-flex items-center space-x-2 px-3 py-1.5 rounded-xl bg-white border border-slate-200 text-xs font-bold shadow-xs">
+                      <span className={item.action === "SELL" || isOver ? "text-rose-600" : "text-emerald-600"}>
+                        {item.action || (isOver ? "SELL" : "BUY")} ₹{Number(item.amount_inr || item.rebalance_amount || 15000).toLocaleString("en-IN")}
                       </span>
-                    ) : (
-                      <div className="inline-flex items-center space-x-2 px-3 py-1.5 rounded-xl bg-white border border-slate-200 text-xs font-bold shadow-xs">
-                        <span className={item.action === "SELL" ? "text-rose-600" : "text-emerald-600"}>
-                          {item.action} ₹{item.amount_inr.toLocaleString("en-IN")}
-                        </span>
-                      </div>
-                    )}
+                    </div>
                   </div>
                 </div>
               );
@@ -142,7 +153,7 @@ export const RebalancingAlertsView: React.FC = () => {
       )}
 
       {/* Suggested Orders Box */}
-      {data && data.suggested_orders.length > 0 && (
+      {data && orders.length > 0 && (
         <div className="light-card rounded-2xl p-6 border border-slate-200 bg-white">
           <div className="flex items-center justify-between pb-3 border-b border-slate-100">
             <h3 className="font-extrabold text-slate-900 text-base flex items-center space-x-2">
@@ -158,12 +169,15 @@ export const RebalancingAlertsView: React.FC = () => {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-4">
-            {data.suggested_orders.map((order, idx) => (
-              <div key={idx} className="p-3.5 rounded-xl bg-slate-50 border border-slate-100 text-xs font-semibold text-slate-800 flex items-center space-x-2">
-                <ArrowRight className="w-4 h-4 text-indigo-600 flex-shrink-0" />
-                <span>{order}</span>
-              </div>
-            ))}
+            {orders.map((order: any, idx: number) => {
+              const text = typeof order === "string" ? order : `${order.action} ${order.ticker_or_sector} - ₹${Number(order.target_amount).toLocaleString("en-IN")}`;
+              return (
+                <div key={idx} className="p-3.5 rounded-xl bg-slate-50 border border-slate-100 text-xs font-semibold text-slate-800 flex items-center space-x-2">
+                  <ArrowRight className="w-4 h-4 text-indigo-600 flex-shrink-0" />
+                  <span>{text}</span>
+                </div>
+              );
+            })}
           </div>
         </div>
       )}

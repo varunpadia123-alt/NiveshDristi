@@ -1,3 +1,4 @@
+from typing import Any, cast
 import numpy as np
 import pandas as pd
 import pandas_ta as ta
@@ -18,9 +19,10 @@ def run_historical_backtest(ticker: str, timeframe_years: int = 3) -> BacktestRe
     if df.empty or len(df) < 50:
         raise ValueError(f"Insufficient historical price data for {ticker}")
 
+    close_series = cast(pd.Series, df['Close'])
     # Compute technical indicators
-    df['RSI'] = ta.rsi(df['Close'], length=14)
-    macd = ta.macd(df['Close'], fast=12, slow=26, signal=9)
+    df['RSI'] = cast(Any, ta.rsi(close_series, length=14))
+    macd = cast(Any, ta.macd(close_series, fast=12, slow=26, signal=9))
     if macd is not None and not macd.empty:
         df['MACD'] = macd.iloc[:, 0]
         df['MACD_Signal'] = macd.iloc[:, 2]
@@ -43,7 +45,7 @@ def run_historical_backtest(ticker: str, timeframe_years: int = 3) -> BacktestRe
 
     for i in range(len(df)):
         price = df['Close'].iloc[i]
-        date_str = df.index[i].strftime("%Y-%m-%d")
+        date_str = str(df.index[i])[:10]
         rsi_val = df['RSI'].iloc[i]
         macd_val = df['MACD'].iloc[i]
         macd_sig_val = df['MACD_Signal'].iloc[i]
@@ -97,7 +99,7 @@ def run_historical_backtest(ticker: str, timeframe_years: int = 3) -> BacktestRe
     step = max(1, len(df) // 100)
     chart_points = []
     for idx in range(0, len(df), step):
-        date_str = df.index[idx].strftime("%Y-%m-%d")
+        date_str = str(df.index[idx])[:10]
         chart_points.append(BacktestDataPoint(
             date=date_str,
             price=round(float(df['Close'].iloc[idx]), 2),

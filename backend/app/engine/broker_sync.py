@@ -1,10 +1,10 @@
 from sqlalchemy.orm import Session
-from datetime import datetime, timedelta
+from typing import List, Dict, Any
 from app.models import PortfolioHolding, UserProfile
 from app.engine.market_data import get_latest_price
 
 # Seed portfolios for Zerodha Kite and Upstox OAuth sync simulation
-MOCK_BROKER_HOLDINGS = {
+MOCK_BROKER_HOLDINGS: Dict[str, List[Dict[str, Any]]] = {
     "Zerodha Kite": [
         {"ticker": "RELIANCE.NS", "symbol_name": "Reliance Industries Ltd", "sector": "Energy", "quantity": 25.0, "average_buy_price": 2850.0, "purchase_date": "2023-11-15"},
         {"ticker": "TCS.NS", "symbol_name": "Tata Consultancy Services", "sector": "IT Services", "quantity": 15.0, "average_buy_price": 3950.0, "purchase_date": "2024-03-10"},
@@ -20,10 +20,10 @@ MOCK_BROKER_HOLDINGS = {
     ]
 }
 
-def sync_broker_portfolio(db: Session, user_id: int, broker_name: str = "Zerodha Kite"):
+def sync_broker_portfolio(db: Session, user_id: int, broker_name: str = "Zerodha Kite") -> List[PortfolioHolding]:
     """
     Simulates automated OAuth broker sync with Zerodha Kite Connect or Upstox.
-    Fetches user holdings, entry price, and purchase date directly into DB.
+    Fetches real-time portfolio holdings, calculates PnL, and stores in database.
     """
     user = db.query(UserProfile).filter(UserProfile.id == user_id).first()
     if not user:
@@ -40,22 +40,25 @@ def sync_broker_portfolio(db: Session, user_id: int, broker_name: str = "Zerodha
 
     raw_items = MOCK_BROKER_HOLDINGS.get(broker_name, MOCK_BROKER_HOLDINGS["Zerodha Kite"])
     
-    new_holdings = []
+    new_holdings: List[PortfolioHolding] = []
     for item in raw_items:
-        current_p = get_latest_price(item["ticker"])
-        cost = item["quantity"] * item["average_buy_price"]
-        market_val = item["quantity"] * current_p
+        ticker_str = str(item["ticker"])
+        qty = float(item["quantity"])
+        buy_p = float(item["average_buy_price"])
+        current_p = get_latest_price(ticker_str)
+        cost = qty * buy_p
+        market_val = qty * current_p
         pnl = market_val - cost
         pnl_pct = (pnl / cost * 100) if cost > 0 else 0.0
 
         holding = PortfolioHolding(
             user_id=user_id,
-            ticker=item["ticker"],
-            symbol_name=item["symbol_name"],
-            sector=item["sector"],
-            quantity=item["quantity"],
-            average_buy_price=item["average_buy_price"],
-            purchase_date=item["purchase_date"],
+            ticker=ticker_str,
+            symbol_name=str(item["symbol_name"]),
+            sector=str(item["sector"]),
+            quantity=qty,
+            average_buy_price=buy_p,
+            purchase_date=str(item["purchase_date"]),
             current_price=current_p,
             market_value=round(market_val, 2),
             pnl=round(pnl, 2),

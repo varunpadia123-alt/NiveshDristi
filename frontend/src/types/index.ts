@@ -1,5 +1,4 @@
 export type BadgeType = "HOLD" | "SELL" | "SWAP";
-export type SentimentLabelType = "BULLISH" | "NEUTRAL" | "BEARISH";
 
 export interface Holding {
   id: number;
@@ -16,7 +15,7 @@ export interface Holding {
   pnl_percentage: number;
   badge: BadgeType;
   composite_score: number;
-  sentiment_label: SentimentLabelType;
+  sentiment_label?: string;
 }
 
 export interface SectorExposure {
@@ -49,54 +48,49 @@ export interface TechnicalMetrics {
   sma_20: number;
   sma_50: number;
   sma_200: number;
-  ema_9: number;
-  ema_21: number;
-  volume_sma_ratio: number;
+  ema_9?: number;
+  ema_21?: number;
   support_level: number;
   resistance_level: number;
-  composite_score: number;
+  volume_sma_ratio: number;
   momentum_score: number;
   trend_score: number;
   volume_score: number;
+  composite_score: number;
   badge: BadgeType;
   badge_reason: string;
   sentiment_score: number;
-  sentiment_label: SentimentLabelType;
-  value_trap_risk: boolean;
+  sentiment_label: string;
+  value_trap_risk?: boolean;
   sentiment_headline: string;
 }
 
 export interface AlternativeDiscovery {
-  original_holding_id: number;
   original_ticker: string;
   original_name: string;
-  original_badge: BadgeType;
   original_composite_score: number;
+  original_badge: string;
+  sector: string;
   alternative_ticker: string;
   alternative_name: string;
-  sector: string;
   alternative_price: number;
-  alternative_badge: BadgeType;
   alternative_composite_score: number;
+  alternative_badge: string;
   technical_score_improvement: number;
-  correlation_with_original: number;
   sentiment_score: number;
-  sentiment_label: SentimentLabelType;
-  value_trap_risk: boolean;
+  sentiment_label: string;
   sentiment_headline: string;
   holding_days: number;
+  unrealized_gain: number;
   tax_type: string;
   tax_rate_pct: number;
-  unrealized_gain: number;
   estimated_tax_payable: number;
-  net_gain_after_tax: number;
   redeployable_capital: number;
   new_shares_acquired: number;
   rag_rationale: string;
-  disclaimer: string;
 }
 
-export interface SwapExecutionRequest {
+export interface SwapExecutionPayload {
   holding_id: number;
   alternative_ticker: string;
   alternative_name: string;
@@ -118,225 +112,449 @@ export interface SwapExecutionResponse {
 
 export interface BacktestDataPoint {
   date: string;
-  price: number;
-  signal?: string | null;
   strategy_equity: number;
   buy_hold_equity: number;
+  trade_signal?: string;
 }
 
 export interface BacktestResponse {
   ticker: string;
   timeframe_years: number;
-  initial_capital: number;
-  final_strategy_capital: number;
-  final_buy_hold_capital: number;
   cagr_strategy_pct: number;
   cagr_buy_hold_pct: number;
   win_rate_pct: number;
-  max_drawdown_pct: number;
   sharpe_ratio: number;
+  max_drawdown_pct: number;
   total_trades: number;
   chart_data: BacktestDataPoint[];
 }
 
-// --- Live Market Screener Types ---
-export interface StockSearchResult {
+export interface StockScreenerItem {
   ticker: string;
   name: string;
   sector: string;
-  market_cap_category: string; // 'Large Cap', 'Mid Cap', 'Small Cap'
+  cap_type: "largecap" | "midcap" | "smallcap";
   current_price: number;
-  day_change: number;
+  change_pts: number;
   day_change_pct: number;
-  market_cap_cr: number;
-  pe_ratio: number;
-  high_52w: number;
-  low_52w: number;
+  open: number;
+  day_high: number;
+  day_low: number;
   volume: number;
-  badge: BadgeType;
-  composite_score: number;
+  fifty_two_week_high: number;
+  fifty_two_week_low: number;
+  market_cap_cr: number;
+  market_cap_category?: string;
+  pe_ratio: number;
+  beta: number;
+  badge?: string;
+  bse_code?: string;
+  exchanges?: string[];
+  exchange?: string;
+  bse_only?: boolean;
+  bse_price?: number;
+  nse_price?: number;
 }
+
+export type StockSearchResult = StockScreenerItem;
 
 export interface TopMoversResponse {
-  large_cap_gainers: StockSearchResult[];
-  large_cap_losers: StockSearchResult[];
-  mid_cap_gainers: StockSearchResult[];
-  mid_cap_losers: StockSearchResult[];
-  small_cap_gainers: StockSearchResult[];
-  small_cap_losers: StockSearchResult[];
+  largecap_gainers: StockScreenerItem[];
+  largecap_losers: StockScreenerItem[];
+  midcap_gainers: StockScreenerItem[];
+  midcap_losers: StockScreenerItem[];
+  smallcap_gainers: StockScreenerItem[];
+  smallcap_losers: StockScreenerItem[];
+  large_cap_gainers?: StockScreenerItem[];
+  large_cap_losers?: StockScreenerItem[];
+  mid_cap_gainers?: StockScreenerItem[];
+  mid_cap_losers?: StockScreenerItem[];
+  small_cap_gainers?: StockScreenerItem[];
+  small_cap_losers?: StockScreenerItem[];
 }
 
-export interface SectorMovement {
-  sector_name: string;
-  index_symbol: string;
-  current_value: number;
-  day_change: number;
-  day_change_pct: number;
-  advancing_count: number;
-  declining_count: number;
+export interface SectorMovementItem {
+  sector: string;
+  sector_name?: string;
+  index_name: string;
+  index_symbol?: string;
+  current_value?: number;
+  change_pct: number;
+  day_change_pct?: number;
+  advances: number;
+  declines: number;
+  advancing_count?: number;
+  declining_count?: number;
   top_performer: string;
   top_performer_gain_pct: number;
-  sentiment: SentimentLabelType;
 }
 
-// --- Discovery Types (IPO, Bond, ETF) ---
-export interface IPOItem {
-  id: string;
-  name: string;
+export type SectorMovement = SectorMovementItem;
+
+export interface MarketIndexItem {
   symbol: string;
+  name: string;
+  exchange: string;
+  country: string;
+  region: string;
+  currency: string;
+  category: string;
+  current_value: number;
+  change_pts: number;
+  day_change_pct: number;
+  open: number;
+  day_high: number;
+  day_low: number;
+  fifty_two_week_high: number;
+  fifty_two_week_low: number;
+  sparkline: number[];
+}
+
+export interface IpoItem {
+  id?: number;
+  company_name: string;
+  name?: string;
+  symbol: string;
+  status: "UPCOMING" | "OPEN" | "CLOSED" | "LISTED";
   price_band: string;
-  min_price: number;
-  max_price: number;
+  max_price?: number;
   issue_size_cr: number;
   lot_size: number;
-  open_date: string;
-  close_date: string;
-  listing_date: string;
-  gmp_inr: number;
-  estimated_listing_gain_pct: number;
-  subscription_times: number;
-  retail_subscription_times: number;
-  qib_subscription_times: number;
-  nii_subscription_times: number;
-  status: "UPCOMING" | "OPEN" | "CLOSED" | "LISTED";
-  ai_rating: "SUBSCRIBE" | "MAY AVOID" | "NEUTRAL";
-  ai_summary: string;
+  bidding_dates?: string;
+  open_date?: string;
+  close_date?: string;
+  listing_date?: string;
+  gmp_pts?: number;
+  gmp_inr?: number;
+  gmp_pct?: number;
+  estimated_listing_gain_pct?: number;
+  subscription_rate_x?: number;
+  subscription_times?: number;
+  retail_subscription_x?: number;
+  qib_subscription_x?: number;
+  nii_subscription_x?: number;
+  ai_verdict?: string;
+  ai_rating?: string;
+  ai_summary?: string;
 }
+
+export type IPOItem = IpoItem;
 
 export interface BondItem {
-  id: string;
-  name: string;
+  id?: number;
+  bond_name: string;
+  name?: string;
+  category: "SGB" | "G-Sec" | "Corporate Bond";
   issuer: string;
-  bond_type: "SGB" | "G-Sec" | "Corporate Bond" | "High-Yield";
   coupon_rate_pct: number;
-  yield_to_maturity_pct: number;
-  credit_rating: string;
+  ytm_pct: number;
+  rating: string;
+  face_value: number;
+  market_price: number;
   maturity_date: string;
-  min_investment: number;
-  interest_payout_frequency: string;
-  risk_level: "Low" | "Moderate" | "High";
   tax_status: string;
+  interest_payout_frequency?: string;
+  min_investment?: number;
+  risk_level?: string;
 }
 
-export interface ETFItem {
-  ticker: string;
+export interface EtfItem {
+  id?: number;
+  symbol: string;
+  ticker?: string;
   name: string;
-  category: "Index" | "Sectoral" | "Gold & Silver" | "Global/Thematic" | "Debt";
+  category: "Index ETF" | "Sectoral ETF" | "Gold & Silver" | "Global ETF";
   current_nav: number;
   day_change_pct: number;
-  return_1y_pct: number;
-  return_3y_cagr_pct: number;
+  one_year_return_pct?: number;
+  return_1y_pct?: number;
+  three_year_cagr_pct?: number;
+  return_3y_cagr_pct?: number;
   expense_ratio_pct: number;
   aum_cr: number;
-  tracking_error_pct: number;
-  pe_ratio: number;
-  high_52w: number;
-  low_52w: number;
+  low_52w?: number;
+  high_52w?: number;
 }
 
-// --- Pro Intelligence Types ---
-export interface StressTestHoldingImpact {
+export type ETFItem = EtfItem;
+
+export interface StressTestHoldingResult {
   ticker: string;
   name: string;
-  sector: string;
+  weight_pct: number;
   current_value: number;
   beta: number;
-  simulated_change_pct: number;
-  projected_loss_inr: number;
-  projected_value: number;
-  vulnerability_rating: "Low" | "Moderate" | "High" | "Severe";
+  estimated_drop_pct: number;
+  projected_loss: number;
+  vulnerability_rating: "HIGH" | "MODERATE" | "LOW / DEFENSIVE";
 }
 
-export interface StressTestResponse {
+export interface StressTestScenarioResult {
   scenario_name: string;
-  scenario_description: string;
-  nifty_drop_pct: number;
-  initial_portfolio_value: number;
-  simulated_portfolio_value: number;
-  total_loss_inr: number;
-  total_loss_pct: number;
-  max_drawdown_holding: string;
-  resilient_holding: string;
-  defensive_recommendation: string;
-  holdings_impact: StressTestHoldingImpact[];
+  nifty_shock_pct: number;
+  projected_portfolio_loss: number;
+  projected_loss_pct: number;
+  projected_portfolio_value: number;
+  initial_portfolio_value?: number;
+  simulated_portfolio_value?: number;
+  total_loss_pct?: number;
+  total_loss_inr?: number;
+  max_drawdown_holding?: string;
+  resilient_holding?: string;
+  holdings_impact?: Array<{
+    ticker: string;
+    name: string;
+    weight_pct: number;
+    beta: number;
+    projected_drop_pct: number;
+    projected_loss_inr: number;
+    risk_level: string;
+  }>;
+  holdings_breakdown: StressTestHoldingResult[];
+  defensive_recommendation?: string;
+  ai_risk_advisory: string;
 }
 
-export interface RebalanceTarget {
+export type StressTestResponse = StressTestScenarioResult;
+
+export interface RebalanceAlertItem {
   asset_or_sector: string;
-  target_pct: number;
-  current_pct: number;
-  current_value: number;
-  target_value: number;
+  target_weight_pct: number;
+  actual_weight_pct: number;
   drift_pct: number;
-  action: "BUY" | "SELL" | "HOLD";
-  amount_inr: number;
-  status: "BALANCED" | "OVERWEIGHT" | "UNDERWEIGHT";
+  severity: "HIGH" | "MEDIUM" | "LOW";
+  action_needed: string;
+  rebalance_amount: number;
 }
 
 export interface RebalancingResponse {
-  total_portfolio_value: number;
-  is_drift_detected: boolean;
-  max_drift_pct: number;
-  rebalancing_urgency: "High" | "Moderate" | "Low";
-  allocation_breakdown: RebalanceTarget[];
-  suggested_orders: string[];
+  alerts?: RebalanceAlertItem[];
+  is_drift_detected?: boolean;
+  rebalancing_urgency?: string;
+  max_drift_pct?: number;
+  allocation_breakdown?: Array<{
+    sector: string;
+    current_pct: number;
+    target_pct: number;
+    drift_pct: number;
+    action: string;
+  }>;
+  suggested_orders?: Array<{
+    action: "BUY" | "SELL";
+    ticker_or_sector: string;
+    target_amount: number;
+    rationale: string;
+  }>;
+  rebalancing_orders?: any[];
+  is_rebalanced?: boolean;
 }
 
-export interface TaxHarvestHolding {
-  holding_id: number;
+export interface TaxLossHarvestingItem {
+  holding_id?: number;
   ticker: string;
   name: string;
-  holding_days: number;
-  is_short_term: boolean;
-  tax_type: string;
-  current_value: number;
-  cost_basis: number;
+  sector?: string;
+  cost_basis?: number;
+  invested_amount?: number;
+  current_value?: number;
+  current_price?: number;
+  quantity?: number;
+  average_buy_price?: number;
   unrealized_loss: number;
-  tax_rate_applicable_pct: number;
-  potential_tax_savings_inr: number;
-  suggested_peer_alternative: string;
-  harvest_action: string;
+  holding_days?: number;
+  holding_period_days?: number;
+  holding_duration_days?: number;
+  tax_type?: string;
+  tax_classification?: string;
+  tax_category?: string;
+  harvest_action?: string;
+  potential_tax_savings?: number;
+  potential_tax_savings_inr?: number;
+  potential_tax_offset?: number;
+  suggested_peer_alternative?: string;
+  recommended_alternative?: string;
+  rationale?: string;
+  urgency?: string;
+  ai_harvest_strategy?: string;
 }
 
 export interface TaxLossHarvestingResponse {
-  total_unrealized_losses_inr: number;
-  total_potential_tax_savings_inr: number;
-  stcl_amount_inr: number;
-  ltcl_amount_inr: number;
-  eligible_holdings_count: number;
-  recommendation_summary: string;
-  opportunities: TaxHarvestHolding[];
+  opportunities?: TaxLossHarvestingItem[];
+  total_potential_savings?: number;
+  total_potential_tax_savings_inr?: number;
+  total_loss_harvestable?: number;
+  total_unrealized_losses_inr?: number;
+  stcl_amount_inr?: number;
+  eligible_holdings_count?: number;
 }
 
 export interface CorrelationMatrixResponse {
   tickers: string[];
-  labels: string[];
+  labels?: string[];
   matrix: number[][];
-  high_correlation_pairs: string[];
-  diversification_score: number;
+  average_correlation: number;
+  diversification_score?: number;
+  diversification_health: string;
+  high_correlation_pairs?: Array<{ pair: string; correlation: number }>;
 }
 
-export interface OptionSignal {
+export interface OptionSetupItem {
   ticker: string;
-  company_name: string;
+  company_name?: string;
   spot_price: number;
-  strike_price: number;
-  option_type: "CE" | "PE";
-  expiry: string;
   rsi_14: number;
-  moneyness: "ITM" | "ATM" | "OTM";
-  signal_type: string;
-  recommended_action: "BUY CALL (CE)" | "BUY PUT (PE)";
-  entry_premium: number;
+  macd_bias: string;
+  option_type: string;
+  strike_price: number;
+  moneyness: string;
+  expiry: string;
+  entry_premium?: number;
+  estimated_premium: number;
   target_premium: number;
-  stop_loss_premium: number;
-  risk_reward_ratio: string;
+  stop_loss: number;
+  stop_loss_premium?: number;
+  risk_reward: string;
+  risk_reward_ratio?: string;
+  recommended_action?: string;
   rationale: string;
 }
 
+export type OptionSignal = OptionSetupItem;
+
 export interface OptionsScreenerResponse {
+  signals?: OptionSetupItem[];
+  call_opportunities?: OptionSetupItem[];
+  put_opportunities?: OptionSetupItem[];
+}
+
+// -------------------------------------------------------------
+// Stock Charting & Multi-Timeframe History
+// -------------------------------------------------------------
+export interface StockHistoryPoint {
   timestamp: string;
-  total_screened: number;
-  call_opportunities: OptionSignal[];
-  put_opportunities: OptionSignal[];
+  date: string;
+  open: number;
+  high: number;
+  low: number;
+  close: number;
+  volume: number;
+  sma_20?: number | null;
+  sma_50?: number | null;
+  ema_9?: number | null;
+}
+
+export interface StockHistoryResponse {
+  ticker: string;
+  name: string;
+  exchange: string;
+  current_price: number;
+  change_pts: number;
+  day_change_pct: number;
+  timeframe: string;
+  interval: string;
+  candles: StockHistoryPoint[];
+  fifty_two_week_high: number;
+  fifty_two_week_low: number;
+  day_high: number;
+  day_low: number;
+  volume_total: number;
+}
+
+// -------------------------------------------------------------
+// AI Chat Advisor Types
+// -------------------------------------------------------------
+export interface AiChatMessage {
+  role: "user" | "assistant" | "system";
+  content: string;
+  timestamp?: string;
+  suggested_actions?: string[];
+}
+
+export interface AiChatContext {
+  current_ticker?: string;
+  portfolio_focus?: boolean;
+  user_risk_score?: number;
+}
+
+export interface AiChatRequest {
+  messages: AiChatMessage[];
+  context?: AiChatContext;
+}
+
+export interface AiChatResponse {
+  reply: string;
+  suggested_followups: string[];
+  referenced_stocks?: string[];
+  sentiment_tag?: string;
+}
+
+// -------------------------------------------------------------
+// AI Stock Analyst Deep Report Types
+// -------------------------------------------------------------
+export interface AnalystPoint {
+  category: string;
+  title: string;
+  description: string;
+  impact: "BULLISH" | "BEARISH" | "NEUTRAL";
+}
+
+export interface TechnicalSummary {
+  trend: string;
+  rsi_status: string;
+  macd_signal: string;
+  moving_averages_alignment: string;
+  key_support: number;
+  key_resistance: number;
+  pivot_point: number;
+}
+
+export interface FundamentalSummary {
+  valuation_assessment: string;
+  pe_verdict: string;
+  market_cap_cr: number;
+  industry_pe: number;
+  pb_ratio: number;
+  roe_pct: number;
+  beta: number;
+}
+
+export interface SentimentSummary {
+  finbert_score: number;
+  sentiment_label: string;
+  headline: string;
+  value_trap_risk: boolean;
+  news_summary: string;
+}
+
+export interface AiStockAnalystReport {
+  ticker: string;
+  company_name: string;
+  exchange: string;
+  sector: string;
+  current_price: number;
+  verdict: "STRONG BUY" | "BUY" | "ACCUMULATE" | "HOLD" | "SELL" | "STRONG SELL";
+  verdict_badge_color: "emerald" | "green" | "amber" | "rose" | "red" | string;
+  confidence_score: number;
+  investment_horizon: string;
+  risk_profile: string;
+  
+  target_short_term: number;
+  target_medium_term: number;
+  target_long_term: number;
+  stop_loss_level: number;
+  upside_potential_pct: number;
+  downside_risk_pct: number;
+  risk_reward_ratio: string;
+  
+  executive_summary: string;
+  pros: AnalystPoint[];
+  cons: AnalystPoint[];
+  
+  technical: TechnicalSummary;
+  fundamental: FundamentalSummary;
+  sentiment: SentimentSummary;
+  
+  actionable_strategy: string;
+  entry_range: string;
+  target_exit_strategy: string;
 }

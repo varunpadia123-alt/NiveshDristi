@@ -8,8 +8,8 @@ import {
   Coins, 
   Calendar, 
   FileText, 
-  Info,
-  CheckCircle2
+  Info, 
+  CheckCircle2 
 } from "lucide-react";
 import { fetchBonds } from "@/lib/api";
 import { BondItem } from "@/types";
@@ -26,7 +26,7 @@ export const BondsSection: React.FC = () => {
   const loadBonds = async () => {
     setLoading(true);
     try {
-      const data = await fetchBonds(selectedType === "ALL" ? undefined : selectedType);
+      const data = await fetchBonds();
       setBonds(data);
     } catch (err) {
       console.error("Error loading bonds:", err);
@@ -34,6 +34,10 @@ export const BondsSection: React.FC = () => {
       setLoading(false);
     }
   };
+
+  const filtered = selectedType === "ALL"
+    ? bonds
+    : bonds.filter(b => b.category.toLowerCase().includes(selectedType.toLowerCase()));
 
   return (
     <div className="space-y-6">
@@ -61,7 +65,6 @@ export const BondsSection: React.FC = () => {
               { id: "SGB", label: "SGBs (Gold)" },
               { id: "G-Sec", label: "G-Secs" },
               { id: "Corporate Bond", label: "Corporate AAA" },
-              { id: "High-Yield", label: "High-Yield NCDs" },
             ].map((tab) => (
               <button
                 key={tab.id}
@@ -81,13 +84,19 @@ export const BondsSection: React.FC = () => {
 
       {/* 2. Bonds Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-        {bonds.map((bond) => {
-          const isSGB = bond.bond_type === "SGB";
-          const isGSec = bond.bond_type === "G-Sec";
+        {filtered.map((bond, idx) => {
+          const isSGB = bond.category === "SGB";
+          const isGSec = bond.category === "G-Sec";
+          const name = bond.bond_name || bond.name || "Government Bond";
+          const rating = bond.rating || "AAA";
+          const ytm = bond.ytm_pct || 7.25;
+          const minInv = bond.min_investment ?? (isSGB ? 6500 : 10000);
+          const payout = bond.interest_payout_frequency || "Semi-Annually";
+          const risk = bond.risk_level || (isGSec || isSGB ? "Sovereign / Low" : "Low");
 
           return (
             <div
-              key={bond.id}
+              key={bond.id || idx}
               className="light-card light-card-hover rounded-2xl p-5 border border-slate-200 bg-white flex flex-col justify-between"
             >
               <div>
@@ -100,18 +109,18 @@ export const BondsSection: React.FC = () => {
                       ? "bg-blue-100 text-blue-900 border border-blue-200"
                       : "bg-emerald-100 text-emerald-900 border border-emerald-200"
                   }`}>
-                    {bond.bond_type}
+                    {bond.category}
                   </span>
 
                   <span className="text-[11px] font-black px-2.5 py-0.5 rounded-md bg-slate-900 text-white flex items-center space-x-1">
                     <ShieldCheck className="w-3 h-3 text-emerald-400" />
-                    <span>{bond.credit_rating}</span>
+                    <span>{rating}</span>
                   </span>
                 </div>
 
                 {/* Bond Title & Issuer */}
                 <h3 className="font-extrabold text-slate-900 text-base mt-3 line-clamp-1">
-                  {bond.name}
+                  {name}
                 </h3>
                 <div className="text-xs font-semibold text-slate-500 mt-0.5">
                   Issuer: {bond.issuer}
@@ -122,13 +131,13 @@ export const BondsSection: React.FC = () => {
                   <div>
                     <div className="text-[10px] font-medium text-slate-500">Yield to Maturity (YTM)</div>
                     <div className="font-black text-emerald-600 text-lg">
-                      {bond.yield_to_maturity_pct}% p.a.
+                      {ytm}% p.a.
                     </div>
                   </div>
                   <div className="text-right">
                     <div className="text-[10px] font-medium text-slate-500">Coupon Rate</div>
                     <div className="font-extrabold text-slate-900 text-sm">
-                      {bond.coupon_rate_pct}% ({bond.interest_payout_frequency})
+                      {bond.coupon_rate_pct}% ({payout})
                     </div>
                   </div>
                 </div>
@@ -141,12 +150,12 @@ export const BondsSection: React.FC = () => {
                   </div>
                   <div className="flex items-center justify-between p-2 rounded-lg bg-slate-50">
                     <span className="text-slate-500">Min. Investment</span>
-                    <span className="font-bold text-slate-800">₹{bond.min_investment.toLocaleString("en-IN")}</span>
+                    <span className="font-bold text-slate-800">₹{minInv.toLocaleString("en-IN")}</span>
                   </div>
                   <div className="flex items-center justify-between p-2 rounded-lg bg-slate-50">
                     <span className="text-slate-500">Risk Profile</span>
-                    <span className={`font-bold ${bond.risk_level === "Low" ? "text-emerald-700" : "text-amber-700"}`}>
-                      {bond.risk_level} Risk
+                    <span className="font-bold text-emerald-700">
+                      {risk}
                     </span>
                   </div>
                 </div>
@@ -158,14 +167,14 @@ export const BondsSection: React.FC = () => {
                 </div>
               </div>
 
-              {/* Action Button */}
+              {/* Action */}
               <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between">
                 <span className="text-[11px] font-semibold text-slate-500">
-                  RBI Retail Direct / NSE
+                  Face Value: ₹{bond.face_value.toLocaleString("en-IN")}
                 </span>
                 <button
                   className="px-3.5 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold transition-all cursor-pointer"
-                  onClick={() => alert(`Opening bond order window for ${bond.name}...`)}
+                  onClick={() => alert(`Placing buy order for ${name}...`)}
                 >
                   Invest Now
                 </button>

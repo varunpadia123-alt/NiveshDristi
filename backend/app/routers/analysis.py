@@ -1,6 +1,6 @@
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-from typing import List, Optional
+from typing import List
 from app.database import get_db
 from app.models import PortfolioHolding, UserProfile
 from app.schemas import TechnicalMetrics, AlternativeDiscovery
@@ -11,6 +11,7 @@ from app.engine.sentiment import analyze_sentiment
 router = APIRouter(prefix="/analysis", tags=["Algorithmic Analysis & RAG Alternatives"])
 
 @router.get("/metrics/{ticker}", response_model=TechnicalMetrics)
+@router.get("/technical/{ticker}", response_model=TechnicalMetrics)
 def get_stock_technical_metrics(ticker: str):
     """Returns 130+ pandas-ta computed technical metrics, composite score (-5.0 to +5.0), and FinBERT sentiment."""
     try:
@@ -64,6 +65,7 @@ def get_portfolio_alternatives(user_id: int = 1, db: Session = Depends(get_db)):
     return discoveries
 
 @router.get("/alternatives/for-holding/{holding_id}", response_model=AlternativeDiscovery)
+@router.get("/alternative/{holding_id}", response_model=AlternativeDiscovery)
 def get_alternative_for_specific_holding(holding_id: int, user_id: int = 1, db: Session = Depends(get_db)):
     """Returns top intra-sector alternative specifically for a single holding."""
     user = db.query(UserProfile).filter(UserProfile.id == user_id).first()

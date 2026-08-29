@@ -13,11 +13,23 @@ import {
   Landmark,
   Layers,
   BrainCircuit,
-  BarChart3
+  BarChart3,
+  Activity,
+  MessageSquare,
+  Sparkles
 } from "lucide-react";
 import { triggerBrokerSync, updateRiskProfile } from "@/lib/api";
 
-export type NavTab = "portfolio" | "screener" | "ipos" | "bonds" | "etfs" | "intelligence" | "backtest";
+export type NavTab = 
+  | "portfolio" 
+  | "screener" 
+  | "advisor"
+  | "indices"
+  | "ipos" 
+  | "bonds" 
+  | "etfs" 
+  | "intelligence" 
+  | "backtest";
 
 interface NavbarProps {
   activeTab: NavTab;
@@ -62,17 +74,19 @@ export const Navbar: React.FC<NavbarProps> = ({
       await updateRiskProfile(newScore, currentBroker);
       onRefresh();
     } catch (err) {
-      console.error("Failed to update risk profile:", err);
+      console.error("Risk score update failed:", err);
     }
   };
 
   const navItems: { id: NavTab; label: string; icon: React.ReactNode; badge?: string }[] = [
-    { id: "portfolio", label: "Portfolio", icon: <PieChart className="w-4 h-4" /> },
-    { id: "screener", label: "Stock Screener", icon: <Search className="w-4 h-4" />, badge: "Live" },
-    { id: "ipos", label: "IPOs", icon: <Rocket className="w-4 h-4" /> },
+    { id: "portfolio", label: "Dashboard", icon: <PieChart className="w-4 h-4" /> },
+    { id: "screener", label: "Stock Screener", icon: <Search className="w-4 h-4" /> },
+    { id: "advisor", label: "AI Advisor", icon: <Sparkles className="w-4 h-4 text-emerald-500" />, badge: "Chat" },
+    { id: "indices", label: "Indices", icon: <Activity className="w-4 h-4" />, badge: "Live" },
+    { id: "ipos", label: "IPOs", icon: <Rocket className="w-4 h-4" />, badge: "GMP" },
     { id: "bonds", label: "Bonds & SGB", icon: <Landmark className="w-4 h-4" /> },
     { id: "etfs", label: "ETFs", icon: <Layers className="w-4 h-4" /> },
-    { id: "intelligence", label: "Pro Analytics", icon: <BrainCircuit className="w-4 h-4" />, badge: "AI" },
+    { id: "intelligence", label: "Pro Analytics", icon: <BrainCircuit className="w-4 h-4 text-amber-500" />, badge: "5 Tools" },
     { id: "backtest", label: "Backtest", icon: <BarChart3 className="w-4 h-4" /> },
   ];
 
@@ -80,13 +94,16 @@ export const Navbar: React.FC<NavbarProps> = ({
     <header className="sticky top-0 z-40 w-full bg-white/95 backdrop-blur-md border-b border-slate-200 shadow-xs">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         
-        {/* Top Header Row */}
-        <div className="flex items-center justify-between h-16 gap-4">
+        {/* Main Header Bar */}
+        <div className="flex items-center justify-between h-16">
           
-          {/* Logo & Brand */}
-          <div className="flex items-center space-x-3 cursor-pointer" onClick={() => onSelectTab("portfolio")}>
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-emerald-600 via-teal-500 to-indigo-600 flex items-center justify-center shadow-md shadow-emerald-600/20 text-white">
-              <TrendingUp className="w-5 h-5" />
+          {/* Logo & Platform Name */}
+          <div 
+            className="flex items-center space-x-3 cursor-pointer group"
+            onClick={() => onSelectTab("portfolio")}
+          >
+            <div className="w-9 h-9 rounded-2xl bg-emerald-600 flex items-center justify-center text-white shadow-md shadow-emerald-600/20 group-hover:scale-105 transition-transform">
+              <TrendingUp className="w-5 h-5 stroke-[2.5]" />
             </div>
             <div>
               <div className="flex items-center space-x-1.5">
@@ -129,31 +146,34 @@ export const Navbar: React.FC<NavbarProps> = ({
               >
                 <Shield className="w-3.5 h-3.5 text-indigo-600" />
                 <span>Risk: {currentRisk}/10</span>
-                <SlidersHorizontal className="w-3 h-3 text-indigo-500 ml-1" />
+                <SlidersHorizontal className="w-3 h-3 text-indigo-400" />
               </button>
 
               {isRiskMenuOpen && (
-                <div className="absolute right-0 mt-2 w-56 p-3 rounded-2xl bg-white border border-slate-200 shadow-xl z-50 text-slate-800">
-                  <div className="text-xs font-bold text-slate-900 mb-2">Adjust Risk Tolerance</div>
-                  <div className="space-y-1.5">
+                <div className="absolute right-0 mt-2 w-52 bg-white rounded-2xl border border-slate-200 shadow-xl p-3 z-50 animate-in fade-in slide-in-from-top-2">
+                  <div className="text-[11px] font-bold text-slate-500 mb-2 uppercase tracking-wider">
+                    Adjust Risk Appetite
+                  </div>
+                  <div className="space-y-1">
                     {[
-                      { score: 3, label: "Conservative (3/10)", desc: "Low Volatility & SGB" },
-                      { score: 6, label: "Moderate (6/10)", desc: "Balanced Large & Mid" },
-                      { score: 9, label: "Aggressive (9/10)", desc: "High Growth & Alpha" }
+                      { score: 3, label: "Conservative", desc: "Capital Preservation" },
+                      { score: 6, label: "Moderate", desc: "Balanced Growth" },
+                      { score: 9, label: "Aggressive", desc: "Alpha & Momentum" },
                     ].map((item) => (
                       <button
                         key={item.score}
                         onClick={() => handleRiskChange(item.score)}
-                        className={`w-full text-left p-2 rounded-lg text-xs transition-colors ${
+                        className={`w-full text-left px-2.5 py-1.5 rounded-lg text-xs transition cursor-pointer flex justify-between items-center ${
                           currentRisk === item.score
-                            ? "bg-indigo-600 text-white font-bold"
-                            : "hover:bg-slate-100 text-slate-700"
+                            ? "bg-indigo-50 text-indigo-900 font-bold"
+                            : "text-slate-700 hover:bg-slate-50"
                         }`}
                       >
-                        <div className="font-semibold">{item.label}</div>
-                        <div className={`text-[10px] ${currentRisk === item.score ? "text-indigo-200" : "text-slate-500"}`}>
-                          {item.desc}
+                        <div>
+                          <div>{item.label}</div>
+                          <div className="text-[10px] text-slate-400">{item.desc}</div>
                         </div>
+                        <span className="text-[11px] font-mono font-bold text-indigo-600">{item.score}/10</span>
                       </button>
                     ))}
                   </div>

@@ -21,6 +21,8 @@ interface HoldingsTableProps {
   loading: boolean;
   onOpenSwapModal: (holding: Holding) => void;
   onOpenTechnicalDrawer: (ticker: string) => void;
+  onOpenStockDetail?: (ticker: string) => void;
+  onOpenAiReport?: (ticker: string) => void;
   onDeleteHolding: (id: number) => void;
   selectedSectorFilter?: string | null;
   onClearSectorFilter?: () => void;
@@ -31,6 +33,8 @@ export const HoldingsTable: React.FC<HoldingsTableProps> = ({
   loading,
   onOpenSwapModal,
   onOpenTechnicalDrawer,
+  onOpenStockDetail,
+  onOpenAiReport,
   onDeleteHolding,
   selectedSectorFilter,
   onClearSectorFilter
@@ -64,7 +68,7 @@ export const HoldingsTable: React.FC<HoldingsTableProps> = ({
     }
   };
 
-  const getSentimentPill = (label: string) => {
+  const getSentimentPill = (label?: string) => {
     switch (label) {
       case "BULLISH":
         return <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">Bullish News</span>;
@@ -193,9 +197,16 @@ export const HoldingsTable: React.FC<HoldingsTableProps> = ({
                   >
                     {/* Ticker & Sector */}
                     <td className="py-3.5 px-4">
-                      <div>
-                        <div className="font-extrabold text-slate-900 text-sm group-hover:text-emerald-700 transition flex items-center gap-1.5">
-                          {h.ticker}
+                      <div 
+                        className="cursor-pointer group/title"
+                        onClick={() => onOpenStockDetail && onOpenStockDetail(h.ticker)}
+                        title="Click to view live Groww-style Line & Candle Charts"
+                      >
+                        <div className="font-extrabold text-slate-900 text-sm group-hover/title:text-emerald-600 transition flex items-center gap-1.5">
+                          <span>{h.ticker}</span>
+                          <span className="text-[10px] font-bold text-emerald-600 opacity-0 group-hover/title:opacity-100 transition-opacity">
+                            View Chart →
+                          </span>
                         </div>
                         <div className="text-[11px] text-slate-500 flex items-center gap-1.5">
                           <span>{h.symbol_name}</span>
@@ -212,8 +223,12 @@ export const HoldingsTable: React.FC<HoldingsTableProps> = ({
                     </td>
 
                     {/* Current Price & Market Value */}
-                    <td className="py-3.5 px-4">
-                      <div className="font-extrabold text-slate-900">₹{h.current_price.toFixed(2)}</div>
+                    <td 
+                      className="py-3.5 px-4 cursor-pointer"
+                      onClick={() => onOpenStockDetail && onOpenStockDetail(h.ticker)}
+                      title="Click to view live chart"
+                    >
+                      <div className="font-extrabold text-slate-900 font-mono">₹{h.current_price.toFixed(2)}</div>
                       <div className="text-[11px] text-slate-500">
                         Val: ₹{h.market_value.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
                       </div>
@@ -269,18 +284,29 @@ export const HoldingsTable: React.FC<HoldingsTableProps> = ({
                     <td className="py-3.5 px-4 text-right">
                       <div className="flex items-center justify-end space-x-1.5">
                         
+                        {/* Deep AI Analyst Report */}
+                        {onOpenAiReport && (
+                          <button
+                            onClick={() => onOpenAiReport(h.ticker)}
+                            className="flex items-center space-x-1 px-2.5 py-1.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white text-xs font-bold shadow-xs transition cursor-pointer"
+                            title="Open Deep AI Stock Analyst Report"
+                          >
+                            <Sparkles className="w-3 h-3" />
+                            <span>AI Report</span>
+                          </button>
+                        )}
+
                         {/* Smart Swap Copilot Action */}
                         <button
                           onClick={() => onOpenSwapModal(h)}
-                          className={`flex items-center space-x-1 px-3 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer ${
+                          className={`flex items-center space-x-1 px-2.5 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer ${
                             isSwapCandidate
                               ? "bg-amber-500 hover:bg-amber-600 text-white shadow-xs"
                               : "bg-slate-100 text-slate-700 hover:bg-slate-200"
                           }`}
                           title="Open AI Smart Swap Copilot"
                         >
-                          <Sparkles className="w-3.5 h-3.5" />
-                          <span>{isSwapCandidate ? "Smart Swap" : "Explore Swap"}</span>
+                          <span>{isSwapCandidate ? "Swap" : "Explore"}</span>
                         </button>
 
                         {/* Deep-Dive Technical Drawer */}

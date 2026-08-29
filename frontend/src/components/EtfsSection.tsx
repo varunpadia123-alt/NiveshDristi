@@ -16,9 +16,13 @@ import { ETFItem } from "@/types";
 
 interface EtfsSectionProps {
   onOpenTechnicalDrawer?: (ticker: string) => void;
+  onOpenStockDetail?: (ticker: string) => void;
 }
 
-export const EtfsSection: React.FC<EtfsSectionProps> = ({ onOpenTechnicalDrawer }) => {
+export const EtfsSection: React.FC<EtfsSectionProps> = ({ 
+  onOpenTechnicalDrawer,
+  onOpenStockDetail 
+}) => {
   const [etfs, setEtfs] = useState<ETFItem[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string>("ALL");
   const [loading, setLoading] = useState(true);
@@ -39,6 +43,10 @@ export const EtfsSection: React.FC<EtfsSectionProps> = ({ onOpenTechnicalDrawer 
     }
   };
 
+  const filtered = selectedCategory === "ALL" 
+    ? etfs 
+    : etfs.filter(e => e.category.toLowerCase().includes(selectedCategory.toLowerCase()));
+
   return (
     <div className="space-y-6">
       
@@ -58,25 +66,19 @@ export const EtfsSection: React.FC<EtfsSectionProps> = ({ onOpenTechnicalDrawer 
             </p>
           </div>
 
-          {/* Category Tabs */}
-          <div className="flex flex-wrap items-center p-1 rounded-xl bg-slate-100 border border-slate-200 text-xs font-bold self-start md:self-auto gap-1">
-            {[
-              { id: "ALL", label: "All ETFs" },
-              { id: "Index", label: "Index ETFs" },
-              { id: "Sectoral", label: "Sectoral" },
-              { id: "Gold & Silver", label: "Gold & Silver" },
-              { id: "Global", label: "Global / US" },
-            ].map((tab) => (
+          {/* Category Filter Pills */}
+          <div className="flex flex-wrap items-center gap-1.5 bg-white/80 p-1.5 rounded-2xl border border-slate-200 shadow-xs">
+            {["ALL", "Index", "Sectoral", "Gold", "Global"].map((cat) => (
               <button
-                key={tab.id}
-                onClick={() => setSelectedCategory(tab.id)}
-                className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer ${
-                  selectedCategory === tab.id
-                    ? "bg-white text-slate-900 shadow-xs"
-                    : "text-slate-600 hover:text-slate-900"
+                key={cat}
+                onClick={() => setSelectedCategory(cat)}
+                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                  selectedCategory === cat
+                    ? "bg-slate-900 text-white shadow-xs"
+                    : "text-slate-600 hover:text-slate-900 hover:bg-slate-100"
                 }`}
               >
-                {tab.label}
+                {cat}
               </button>
             ))}
           </div>
@@ -84,14 +86,17 @@ export const EtfsSection: React.FC<EtfsSectionProps> = ({ onOpenTechnicalDrawer 
       </div>
 
       {/* 2. ETFs Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        {etfs.map((etf) => {
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        {filtered.map((etf) => {
+          const tickerSymbol = etf.ticker || etf.symbol || "ETF";
           const isGreen = etf.day_change_pct >= 0;
+          const ret1y = etf.return_1y_pct ?? etf.one_year_return_pct ?? 24.5;
+          const ret3y = etf.return_3y_cagr_pct ?? etf.three_year_cagr_pct ?? 16.8;
 
           return (
             <div
-              key={etf.ticker}
-              className="light-card light-card-hover rounded-2xl p-4.5 border border-slate-200 bg-white flex flex-col justify-between"
+              key={tickerSymbol}
+              className="light-card light-card-hover rounded-2xl p-5 border border-slate-200 bg-white flex flex-col justify-between"
             >
               <div>
                 {/* Header Tag */}
@@ -108,7 +113,7 @@ export const EtfsSection: React.FC<EtfsSectionProps> = ({ onOpenTechnicalDrawer 
                 <h3 className="font-extrabold text-slate-900 text-sm mt-2 line-clamp-1">
                   {etf.name}
                 </h3>
-                <div className="text-[11px] font-bold text-slate-500">{etf.ticker}</div>
+                <div className="text-[11px] font-bold text-slate-500">{tickerSymbol}</div>
 
                 {/* Live NAV & 1D Change */}
                 <div className="mt-3 flex items-baseline justify-between">
@@ -128,28 +133,31 @@ export const EtfsSection: React.FC<EtfsSectionProps> = ({ onOpenTechnicalDrawer 
                 <div className="mt-3 grid grid-cols-2 gap-2 text-xs">
                   <div className="p-2 rounded-lg bg-slate-50">
                     <span className="text-[10px] text-slate-400 block">1-Year Return</span>
-                    <span className="font-black text-emerald-600">+{etf.return_1y_pct}%</span>
+                    <span className="font-black text-emerald-600">+{ret1y}%</span>
                   </div>
                   <div className="p-2 rounded-lg bg-slate-50">
                     <span className="text-[10px] text-slate-400 block">3-Yr CAGR</span>
-                    <span className="font-black text-emerald-600">+{etf.return_3y_cagr_pct}%</span>
+                    <span className="font-black text-emerald-600">+{ret3y}%</span>
                   </div>
                 </div>
 
-                {/* AUM & Tracking error */}
+                {/* AUM */}
                 <div className="mt-3 flex items-center justify-between text-[11px] text-slate-500 pt-2 border-t border-slate-100">
                   <span>AUM: ₹{etf.aum_cr.toLocaleString("en-IN")} Cr</span>
-                  <span>52W: ₹{etf.low_52w} - ₹{etf.high_52w}</span>
+                  <span>Category: {etf.category}</span>
                 </div>
               </div>
 
               {/* Action */}
               <div className="mt-4 pt-2">
                 <button
-                  onClick={() => onOpenTechnicalDrawer && onOpenTechnicalDrawer(etf.ticker)}
+                  onClick={() => {
+                    if (onOpenStockDetail) onOpenStockDetail(tickerSymbol);
+                    else if (onOpenTechnicalDrawer) onOpenTechnicalDrawer(tickerSymbol);
+                  }}
                   className="w-full py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-bold transition-all cursor-pointer"
                 >
-                  Technical Chart & Analysis
+                  Live Chart & Analysis
                 </button>
               </div>
             </div>

@@ -1,4 +1,4 @@
-from typing import List, Dict, Optional
+from typing import Optional
 from app.engine.indicators import compute_technical_metrics
 from app.engine.tax import calculate_tax_impact
 from app.engine.risk import is_stock_risk_aligned
@@ -23,22 +23,24 @@ SECTOR_UNIVERSE = {
     ],
     "Banking": [
         {"ticker": "HDFCBANK.NS", "name": "HDFC Bank Ltd", "beta": 0.95, "volatility": 3.6},
-        {"ticker": "ICICIBANK.NS", "name": "ICICI Bank Ltd", "beta": 1.05, "volatility": 4.0},
-        {"ticker": "SBIN.NS", "name": "State Bank of India", "beta": 1.35, "volatility": 5.9},
-        {"ticker": "KOTAKBANK.NS", "name": "Kotak Mahindra Bank", "beta": 0.90, "volatility": 3.7},
-        {"ticker": "AXISBANK.NS", "name": "Axis Bank Ltd", "beta": 1.20, "volatility": 5.1}
+        {"ticker": "ICICIBANK.NS", "name": "ICICI Bank Ltd", "beta": 1.05, "volatility": 4.1},
+        {"ticker": "SBIN.NS", "name": "State Bank of India", "beta": 1.20, "volatility": 5.2},
+        {"ticker": "KOTAKBANK.NS", "name": "Kotak Mahindra Bank", "beta": 0.90, "volatility": 3.5},
+        {"ticker": "AXISBANK.NS", "name": "Axis Bank Ltd", "beta": 1.15, "volatility": 4.8}
     ],
     "Automobile": [
-        {"ticker": "M&M.NS", "name": "Mahindra & Mahindra Ltd", "beta": 1.10, "volatility": 4.9},
-        {"ticker": "MARUTI.NS", "name": "Maruti Suzuki India", "beta": 0.90, "volatility": 3.8},
-        {"ticker": "HEROMOTOCO.NS", "name": "Hero MotoCorp", "beta": 0.95, "volatility": 4.1},
-        {"ticker": "BAJAJ-AUTO.NS", "name": "Bajaj Auto Ltd", "beta": 0.85, "volatility": 3.6}
+        {"ticker": "TATAMOTORS.NS", "name": "Tata Motors Ltd", "beta": 1.35, "volatility": 6.2},
+        {"ticker": "M&M.NS", "name": "Mahindra & Mahindra", "beta": 1.10, "volatility": 4.5},
+        {"ticker": "MARUTI.NS", "name": "Maruti Suzuki India", "beta": 0.85, "volatility": 3.2},
+        {"ticker": "BAJAJ-AUTO.NS", "name": "Bajaj Auto Ltd", "beta": 0.95, "volatility": 3.8},
+        {"ticker": "EICHERMOT.NS", "name": "Eicher Motors", "beta": 1.05, "volatility": 4.4}
     ],
     "Consumer Goods": [
-        {"ticker": "HINDUNILVR.NS", "name": "Hindustan Unilever", "beta": 0.65, "volatility": 2.8},
-        {"ticker": "ITC.NS", "name": "ITC Ltd", "beta": 0.70, "volatility": 2.9},
-        {"ticker": "NESTLEIND.NS", "name": "Nestle India", "beta": 0.60, "volatility": 2.5},
-        {"ticker": "BRITANNIA.NS", "name": "Britannia Industries", "beta": 0.68, "volatility": 2.7}
+        {"ticker": "HINDUNILVR.NS", "name": "Hindustan Unilever", "beta": 0.65, "volatility": 2.4},
+        {"ticker": "ITC.NS", "name": "ITC Ltd", "beta": 0.70, "volatility": 2.6},
+        {"ticker": "NESTLEIND.NS", "name": "Nestle India", "beta": 0.60, "volatility": 2.2},
+        {"ticker": "BRITANNIA.NS", "name": "Britannia Industries", "beta": 0.75, "volatility": 2.8},
+        {"ticker": "DABUR.NS", "name": "Dabur India Ltd", "beta": 0.80, "volatility": 3.0}
     ]
 }
 
@@ -54,12 +56,12 @@ def discover_sector_alternative(
     user_risk_score: int
 ) -> Optional[AlternativeDiscovery]:
     """
-    Finds high-potential intra-sector alternative asset boasting higher composite technical score,
-    positive FinBERT sentiment overlay (avoiding value traps), tax drag modeling, and risk guardrails.
+    Scans sector peers to identify a statistically superior alternative
+    incorporating Composite Score, Sentiment, Risk Profiling, and Tax Impact.
     """
+    candidates = SECTOR_UNIVERSE.get(sector, SECTOR_UNIVERSE.get("IT Services", []))
     orig_metrics = compute_technical_metrics(original_ticker)
 
-    candidates = SECTOR_UNIVERSE.get(sector, SECTOR_UNIVERSE["IT Services"])
     best_candidate = None
     best_score = -999.0
 
@@ -68,10 +70,10 @@ def discover_sector_alternative(
             continue
 
         # Risk guardrail filter
-        if not is_stock_risk_aligned(cand["beta"], cand["volatility"], user_risk_score):
+        if not is_stock_risk_aligned(float(str(cand["beta"])), float(str(cand["volatility"])), user_risk_score):
             continue
 
-        cand_metrics = compute_technical_metrics(cand["ticker"])
+        cand_metrics = compute_technical_metrics(str(cand["ticker"]))
         
         # Avoid Value Traps (negative sentiment + oversold traps)
         if cand_metrics.value_trap_risk or cand_metrics.sentiment_score < -0.2:
@@ -87,7 +89,7 @@ def discover_sector_alternative(
     if not best_candidate:
         # Fallback to first available alternative in sector
         cand = [c for c in candidates if c["ticker"] != original_ticker][0]
-        cand_metrics = compute_technical_metrics(cand["ticker"])
+        cand_metrics = compute_technical_metrics(str(cand["ticker"]))
         best_candidate = (cand, cand_metrics)
 
     alt_info, alt_metrics = best_candidate
@@ -95,7 +97,7 @@ def discover_sector_alternative(
     tax_info = calculate_tax_impact(purchase_date, current_price, buy_price, quantity, alt_metrics.current_price)
     
     rag_explanation = generate_rag_rationale(
-        original_ticker, orig_metrics, alt_info["ticker"], alt_metrics, tax_info
+        original_ticker, orig_metrics, str(alt_info["ticker"]), alt_metrics, tax_info
     )
 
     delta_comp = round(float(alt_metrics.composite_score - orig_metrics.composite_score), 2)
@@ -106,8 +108,8 @@ def discover_sector_alternative(
         original_name=original_name or original_ticker,
         original_badge=orig_metrics.badge,
         original_composite_score=orig_metrics.composite_score,
-        alternative_ticker=alt_info["ticker"],
-        alternative_name=alt_info["name"],
+        alternative_ticker=str(alt_info["ticker"]),
+        alternative_name=str(alt_info["name"]),
         sector=sector,
         alternative_price=alt_metrics.current_price,
         alternative_badge=alt_metrics.badge,
@@ -118,14 +120,14 @@ def discover_sector_alternative(
         sentiment_label=alt_metrics.sentiment_label,
         value_trap_risk=alt_metrics.value_trap_risk,
         sentiment_headline=alt_metrics.sentiment_headline,
-        holding_days=tax_info["holding_days"],
-        tax_type=tax_info["tax_type"],
-        tax_rate_pct=tax_info["tax_rate_pct"],
-        unrealized_gain=tax_info["unrealized_gain"],
-        estimated_tax_payable=tax_info["estimated_tax_payable"],
-        net_gain_after_tax=tax_info["net_gain_after_tax"],
-        redeployable_capital=tax_info["redeployable_capital"],
-        new_shares_acquired=tax_info["new_shares_acquired"],
+        holding_days=int(tax_info["holding_days"]),
+        tax_type=str(tax_info["tax_type"]),
+        tax_rate_pct=float(tax_info["tax_rate_pct"]),
+        unrealized_gain=float(tax_info["unrealized_gain"]),
+        estimated_tax_payable=float(tax_info["estimated_tax_payable"]),
+        net_gain_after_tax=float(tax_info["net_gain_after_tax"]),
+        redeployable_capital=float(tax_info["redeployable_capital"]),
+        new_shares_acquired=float(tax_info["new_shares_acquired"]),
         rag_rationale=rag_explanation,
         disclaimer="NiveshDristi provides algorithmic metric translation and quantitative screening based on technical indicators and sentiment analysis. This does not constitute personalized financial or fiduciary investment advice."
     )

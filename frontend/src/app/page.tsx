@@ -16,6 +16,7 @@ import { TechnicalDrawer } from "@/components/TechnicalDrawer";
 import { BacktestSandbox } from "@/components/BacktestSandbox";
 import { AddHoldingModal } from "@/components/AddHoldingModal";
 import { MarketScreener } from "@/components/MarketScreener";
+import { IndicesSection } from "@/components/IndicesSection";
 import { IpoSection } from "@/components/IpoSection";
 import { BondsSection } from "@/components/BondsSection";
 import { EtfsSection } from "@/components/EtfsSection";
@@ -24,6 +25,9 @@ import { RebalancingAlertsView } from "@/components/RebalancingAlertsView";
 import { TaxLossHarvestingView } from "@/components/TaxLossHarvestingView";
 import { CorrelationMatrixView } from "@/components/CorrelationMatrixView";
 import { OptionsScreenerView } from "@/components/OptionsScreenerView";
+import { StockDetailModal } from "@/components/StockDetailModal";
+import { AiStockAnalystModal } from "@/components/AiStockAnalystModal";
+import { AiChatAdvisor } from "@/components/AiChatAdvisor";
 
 import { 
   Sparkles, 
@@ -34,7 +38,8 @@ import {
   ReceiptText, 
   Network, 
   Zap,
-  Layers
+  Layers,
+  MessageSquare
 } from "lucide-react";
 
 export default function DashboardPage() {
@@ -50,9 +55,13 @@ export default function DashboardPage() {
   // Modals & Drawers state
   const [selectedHoldingForSwap, setSelectedHoldingForSwap] = useState<Holding | null>(null);
   const [selectedTickerForDrawer, setSelectedTickerForDrawer] = useState<string | null>(null);
+  const [selectedTickerForDetail, setSelectedTickerForDetail] = useState<string | null>(null);
+  const [selectedTickerForAiReport, setSelectedTickerForAiReport] = useState<string | null>(null);
   const [isBacktestOpen, setIsBacktestOpen] = useState<boolean>(false);
   const [isAddModalOpen, setIsAddModalOpen] = useState<boolean>(false);
   const [selectedSectorFilter, setSelectedSectorFilter] = useState<string | null>(null);
+  const [isFloatingAdvisorOpen, setIsFloatingAdvisorOpen] = useState<boolean>(false);
+  const [advisorInitialPrompt, setAdvisorInitialPrompt] = useState<string | null>(null);
 
   const loadData = async () => {
     setLoading(true);
@@ -95,6 +104,11 @@ export default function DashboardPage() {
   const handleSwapSuccess = () => {
     showToast("Smart Swap executed successfully! Portfolio updated.");
     loadData();
+  };
+
+  const handleOpenAiChatWithPrompt = (prompt?: string) => {
+    if (prompt) setAdvisorInitialPrompt(prompt);
+    setActiveTab("advisor");
   };
 
   return (
@@ -163,36 +177,59 @@ export default function DashboardPage() {
               onClearSectorFilter={() => setSelectedSectorFilter(null)}
               onOpenSwapModal={(h) => setSelectedHoldingForSwap(h)}
               onOpenTechnicalDrawer={(t) => setSelectedTickerForDrawer(t)}
+              onOpenStockDetail={(t) => setSelectedTickerForDetail(t)}
+              onOpenAiReport={(t) => setSelectedTickerForAiReport(t)}
               onDeleteHolding={handleDeleteHolding}
             />
           </div>
         )}
 
-        {/* 2. STOCK SCREENER & MARKET TAB (Groww-like) */}
+        {/* 2. STOCK SCREENER & MARKET TAB (Groww-like with Live Charts) */}
         {activeTab === "screener" && (
           <MarketScreener
+            onOpenStockDetail={(t) => setSelectedTickerForDetail(t)}
             onOpenTechnicalDrawer={(t) => setSelectedTickerForDrawer(t)}
+            onOpenAiReport={(t) => setSelectedTickerForAiReport(t)}
+            onOpenAddModalWithTicker={(ticker, name, sector, price) => {
+              setIsAddModalOpen(true);
+            }}
           />
         )}
 
-        {/* 3. IPOs HUB TAB */}
+        {/* 3. AI CHAT ADVISOR TAB */}
+        {activeTab === "advisor" && (
+          <AiChatAdvisor
+            mode="embedded"
+            initialPrompt={advisorInitialPrompt}
+            onOpenStockDetail={(t) => setSelectedTickerForDetail(t)}
+            onOpenAiReport={(t) => setSelectedTickerForAiReport(t)}
+          />
+        )}
+
+        {/* 4. INDICES HUB TAB (Indian & Global) */}
+        {activeTab === "indices" && (
+          <IndicesSection />
+        )}
+
+        {/* 5. IPOs HUB TAB */}
         {activeTab === "ipos" && (
           <IpoSection />
         )}
 
-        {/* 4. BONDS & SGB HUB TAB */}
+        {/* 6. BONDS & SGB HUB TAB */}
         {activeTab === "bonds" && (
           <BondsSection />
         )}
 
-        {/* 5. ETFs CATALOG TAB */}
+        {/* 7. ETFs CATALOG TAB */}
         {activeTab === "etfs" && (
           <EtfsSection
             onOpenTechnicalDrawer={(t) => setSelectedTickerForDrawer(t)}
+            onOpenStockDetail={(t) => setSelectedTickerForDetail(t)}
           />
         )}
 
-        {/* 6. PRO ANALYTICS TAB */}
+        {/* 8. PRO ANALYTICS TAB */}
         {activeTab === "intelligence" && (
           <div className="space-y-6">
             
@@ -235,6 +272,35 @@ export default function DashboardPage() {
 
       </main>
 
+      {/* Floating AI Advisor trigger button (when not on advisor tab) */}
+      {activeTab !== "advisor" && (
+        <button
+          onClick={() => setIsFloatingAdvisorOpen(!isFloatingAdvisorOpen)}
+          className="fixed bottom-6 right-6 z-40 flex items-center space-x-2 px-4 py-3 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-600 text-white font-black text-xs shadow-2xl shadow-emerald-600/30 hover:scale-105 transition-all cursor-pointer group"
+          title="Open AI Chat Advisor"
+        >
+          <Sparkles className="w-4 h-4 group-hover:rotate-12 transition-transform" />
+          <span>AI Advisor</span>
+        </button>
+      )}
+
+      {/* Floating AI Chat Advisor Widget */}
+      {isFloatingAdvisorOpen && activeTab !== "advisor" && (
+        <AiChatAdvisor
+          mode="floating"
+          isOpen={isFloatingAdvisorOpen}
+          onClose={() => setIsFloatingAdvisorOpen(false)}
+          onOpenStockDetail={(t) => {
+            setIsFloatingAdvisorOpen(false);
+            setSelectedTickerForDetail(t);
+          }}
+          onOpenAiReport={(t) => {
+            setIsFloatingAdvisorOpen(false);
+            setSelectedTickerForAiReport(t);
+          }}
+        />
+      )}
+
       {/* Footer */}
       <footer className="w-full border-t border-slate-200 py-6 text-center text-xs text-slate-500 bg-white">
         <div className="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-2">
@@ -246,6 +312,23 @@ export default function DashboardPage() {
       </footer>
 
       {/* Modals & Drawers */}
+      <StockDetailModal
+        ticker={selectedTickerForDetail}
+        isOpen={!!selectedTickerForDetail}
+        onClose={() => setSelectedTickerForDetail(null)}
+        onOpenAiReport={(t) => setSelectedTickerForAiReport(t)}
+        onOpenTechnicalDrawer={(t) => setSelectedTickerForDrawer(t)}
+        onOpenAddHolding={() => setIsAddModalOpen(true)}
+      />
+
+      <AiStockAnalystModal
+        ticker={selectedTickerForAiReport}
+        isOpen={!!selectedTickerForAiReport}
+        onClose={() => setSelectedTickerForAiReport(null)}
+        onOpenLiveChart={(t) => setSelectedTickerForDetail(t)}
+        onOpenAiChat={handleOpenAiChatWithPrompt}
+      />
+
       <SwapModal
         holding={selectedHoldingForSwap}
         isOpen={!!selectedHoldingForSwap}
@@ -276,3 +359,4 @@ export default function DashboardPage() {
     </div>
   );
 }
+

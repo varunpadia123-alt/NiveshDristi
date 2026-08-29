@@ -1,5 +1,5 @@
 from fastapi import APIRouter, HTTPException, Query
-from app.schemas import BacktestResponse, BacktestRequest
+from app.schemas import BacktestResponse
 from app.engine.backtest import run_historical_backtest
 
 router = APIRouter(prefix="/backtest", tags=["Backtesting Sandbox"])

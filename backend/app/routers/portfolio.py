@@ -33,7 +33,6 @@ def get_portfolio_summary(user_id: int = 1, db: Session = Depends(get_db)):
     total_investment = sum(h.quantity * h.average_buy_price for h in holdings)
     total_current_val = 0.0
     sector_totals = {}
-    total_comp_score = 0.0
 
     for h in holdings:
         curr_p = get_latest_price(h.ticker)
@@ -72,7 +71,7 @@ def get_portfolio_summary(user_id: int = 1, db: Session = Depends(get_db)):
             sector=sector,
             value=round(data["value"], 2),
             percentage=round(pct, 1),
-            stock_count=data["count"],
+            stock_count=int(data["count"]),
             is_overconcentrated=is_over
         ))
 
@@ -151,7 +150,7 @@ def get_user_holdings(user_id: int = 1, db: Session = Depends(get_db)):
 @router.post("/sync", response_model=List[HoldingResponse])
 def trigger_broker_sync(broker: str = Query(default="Zerodha Kite"), user_id: int = 1, db: Session = Depends(get_db)):
     """Triggers automated broker sync (Zerodha Kite, Upstox, Groww, AngelOne)."""
-    holdings = sync_broker_portfolio(db, user_id=user_id, broker_name=broker)
+    sync_broker_portfolio(db, user_id=user_id, broker_name=broker)
     return get_user_holdings(user_id=user_id, db=db)
 
 @router.post("/add", response_model=HoldingResponse)

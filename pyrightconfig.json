@@ -1,0 +1,13 @@
+{
+  "venvPath": "backend",
+  "venv": "venv",
+  "extraPaths": [
+    "backend"
+  ],
+  "pythonVersion": "3.12",
+  "typeCheckingMode": "basic",
+  "reportPrivateImportUsage": false,
+  "reportUnknownMemberType": false,
+  "reportUnknownArgumentType": false,
+  "reportUnknownVariableType": false
+}
